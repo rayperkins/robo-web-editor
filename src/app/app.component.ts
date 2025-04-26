@@ -5,8 +5,7 @@ import { BlocklyComponent } from './blockly/blockly.component';
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    standalone: true,
-    imports: [BlocklyComponent],
+    imports: [BlocklyComponent]
 })
 export class AppComponent {
   title = 'blockly-angular-sample';
