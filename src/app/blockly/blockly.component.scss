@@ -1,0 +1,9 @@
+:host {
+  display: flex !important;
+  flex-direction: row;
+}
+
+#blocklyDiv {
+  flex: 1 0 auto;
+  min-width: 1px;
+}

@@ -1,0 +1,175 @@
+$margin-0: 0px;
+$margin-1: 5px;
+$margin-2: 10px;
+$margin-3: 15px;
+$margin-4: 20px;
+
+.m-0 {
+    margin: $margin-0 !important;
+}
+
+.mt-0 {
+    margin-top: $margin-0 !important;
+}
+
+.mr-0 {
+    margin-right: $margin-0 !important;
+}
+
+.mb-0 {
+    margin-bottom: $margin-0 !important;
+}
+
+.ml-0 {
+    margin-left: $margin-0 !important;
+}
+
+
+.m-1 {
+    margin: $margin-1 !important;
+}
+
+.mt-1 {
+    margin-top: $margin-1 !important;
+}
+
+.mt-1-if-last-child:not(:first-child) {
+    margin-top: $margin-1 !important;
+}
+
+.mr-1 {
+    margin-right: $margin-1 !important;
+}
+
+.mb-1 {
+    margin-bottom: $margin-1 !important;
+}
+
+.ml-1 {
+    margin-left: $margin-1 !important;
+}
+
+.m-neg-1 {
+    margin: -$margin-1 !important;
+}
+
+.mt-neg-1 {
+    margin-top: -$margin-1 !important;
+}
+
+.mr-neg-1 {
+    margin-right: -$margin-1 !important;
+}
+
+.mb-neg-1 {
+    margin-bottom: -$margin-1 !important;
+}
+
+.ml-neg-1 {
+    margin-left: -$margin-1 !important;
+}
+
+
+.m-2 {
+    margin: $margin-2 !important;
+}
+
+.mt-2 {
+    margin-top: $margin-2 !important;
+}
+
+.mr-2 {
+    margin-right: $margin-2 !important;
+}
+
+.mb-2 {
+    margin-bottom: $margin-2 !important;
+}
+
+.ml-2 {
+    margin-left: $margin-2 !important;
+}
+
+.m-neg-2 {
+    margin: -$margin-2 !important;
+}
+
+.mt-neg-2 {
+    margin-top: -$margin-2 !important;
+}
+
+.mr-neg-2 {
+    margin-right: -$margin-2 !important;
+}
+
+.mb-neg-2 {
+    margin-bottom: -$margin-2 !important;
+}
+
+.ml-neg-2 {
+    margin-left: -$margin-2 !important;
+}
+
+.m-3 {
+    margin: $margin-3 !important;
+}
+
+.mt-3 {
+    margin-top: $margin-3 !important;
+}
+
+.mr-3 {
+    margin-right: $margin-3 !important;
+}
+
+.mb-3 {
+    margin-bottom: $margin-3 !important;
+}
+
+.ml-3 {
+    margin-left: $margin-3 !important;
+}
+
+.m-neg-3 {
+    margin: -$margin-3 !important;
+}
+
+.mt-neg-3 {
+    margin-top: -$margin-3 !important;
+}
+
+.mr-neg-3 {
+    margin-right: -$margin-3 !important;
+}
+
+.mb-neg-3 {
+    margin-bottom: -$margin-3 !important;
+}
+
+.ml-neg-3 {
+    margin-left: -$margin-3 !important;
+}
+
+.mb-4 {
+    margin-bottom: $margin-4 !important;
+}
+
+.mt-neg-4 {
+    margin-top: -$margin-4 !important;
+}
+
+.mb-neg-4 {
+    margin-bottom: -$margin-4 !important;
+}
+
+.m-auto {
+    margin: auto;
+}
+
+.mr-auto {
+    margin-right: auto;
+}
+
+.ml-auto {
+    margin-left: auto;
+}

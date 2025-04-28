@@ -29,7 +29,7 @@ import {BlocklyOptions} from 'blockly';
 @Component({
     selector: 'app-blockly',
     templateUrl: './blockly.component.html',
-    styleUrls: ['./blockly.component.css'],
+    styleUrls: ['./blockly.component.scss'],
     standalone: true,
 })
 export class BlocklyComponent implements OnInit {
