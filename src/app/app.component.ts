@@ -6,9 +6,11 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { BlocklyComponent } from './blockly/blockly.component';
+import { OttoService } from './otto/otto.service';
+import { OttoDevice } from './otto/otto.device';
 
 @Component({
     selector: 'app-root',
@@ -25,12 +27,48 @@ import { BlocklyComponent } from './blockly/blockly.component';
     ]
 })
 export class AppComponent {
-  title = 'blockly-angular-sample';
-  private breakpointObserver = inject(BreakpointObserver);
 
-  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
-    .pipe(
-      map(result => result.matches),
-      shareReplay()
-    );
+    title = 'blockly-angular-sample';
+    private breakpointObserver = inject(BreakpointObserver);
+        
+    public isConnecting$ = new BehaviorSubject<boolean>(false);
+    public connectedDevice?: OttoDevice;
+    
+    constructor(
+        private ottoService: OttoService,
+    ) {
+
+    }
+
+    isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
+        .pipe(
+        map(result => result.matches),
+        shareReplay()
+        );
+
+    bluetoothConnectClicked() {
+        this.isConnecting$.next(true);
+        this.ottoService.discover().subscribe({next: (device) =>
+        {
+            device.connect().subscribe({next: (isConnected) => {
+                this.isConnecting$.next(false);
+                if(isConnected) {
+                    console.log('connected!!!');
+
+                    this.connectedDevice = device;
+                    this.connectedDevice.sendCommand('victory').subscribe({
+                        next: () => console.log('command sent!')
+                    });
+                }
+            }, error: () => this.isConnecting$.next(false)});
+
+        }, error: () => this.isConnecting$.next(false)});
+    }
+
+    bluetoothDisconnectClicked() {
+        if(this.connectedDevice) {
+            this.connectedDevice.disconnect();
+            this.connectedDevice = null;
+        }
+    }
 }
