@@ -5,12 +5,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { BlocklyComponent } from './blockly/blockly.component';
 import { OttoService } from './otto/otto.service';
 import { OttoDevice } from './otto/otto.device';
+import { DisconnectBluetoothDialog} from './shared/disconnect-bluetooth-dialog/disconnect-bluetooth-dialog';
+import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
 
 @Component({
     selector: 'app-root',
@@ -35,6 +38,7 @@ export class AppComponent {
     public connectedDevice?: OttoDevice;
     
     constructor(
+        private dialog: MatDialog,
         private ottoService: OttoService,
     ) {
 
@@ -56,9 +60,9 @@ export class AppComponent {
                     console.log('connected!!!');
 
                     this.connectedDevice = device;
-                    this.connectedDevice.sendCommand('victory').subscribe({
-                        next: () => console.log('command sent!')
-                    });
+                    // this.connectedDevice.sendCommand('victory').subscribe({
+                    //     next: () => console.log('command sent!')
+                    // });
                 }
             }, error: () => this.isConnecting$.next(false)});
 
@@ -67,8 +71,31 @@ export class AppComponent {
 
     bluetoothDisconnectClicked() {
         if(this.connectedDevice) {
-            this.connectedDevice.disconnect();
-            this.connectedDevice = null;
+            this.dialog
+                .open(DisconnectBluetoothDialog)
+                .afterClosed()
+                .subscribe({next: result => {
+                    if(result !== undefined) {
+                        this.connectedDevice.disconnect();
+                        this.connectedDevice = null;
+                    }
+                }});
+        }
+    }
+
+    openRemoteClicked() {
+        if(this.connectedDevice) {
+            this.dialog
+                .open(OttoRemoteDialog, {
+                    data: this.connectedDevice
+                })
+                .afterClosed()
+                .subscribe({next: result => {
+                    if(result !== undefined) {
+                        this.connectedDevice.disconnect();
+                        this.connectedDevice = null;
+                    }
+                }});
         }
     }
 }

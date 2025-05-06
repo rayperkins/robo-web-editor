@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Otto Remote</h2>
+<mat-dialog-content class="fx-row">
+  <div class="fx-flex-0-0 fx-row fx-justify-center">
+    <!--Layout for buttons -->
+    <div class="control-button-container">
+      <!-- top row -->
+      <div></div>
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('forward 2')">
+        <mat-icon>arrow_upward</mat-icon>
+      </button>
+      <div></div>
+      <!-- middle row -->
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('right 2')">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <button mat-mini-fab (click)="sendCommand('stop')">
+        <mat-icon>pause</mat-icon>
+      </button>
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('left 2')">
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+      <!-- bottom row -->
+      <div></div>
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('backward 2')">
+        <mat-icon>arrow_downward</mat-icon>
+      </button>
+      <div></div>
+    </div>
+  </div>
+  <mat-card appearance="outlined" class="fx-flex">
+    <mat-card-content class="action-button-container">
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('happy')">Happy</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('victory')">Victory</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('sad')">Sad</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('sleeping')">Sleeping</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('confused')">Confused</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('fail')">Fail</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('fart')">Fart</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('wrong')">Wrong</button>
+    </mat-card-content>
+  </mat-card>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Close</button>
+</mat-dialog-actions>

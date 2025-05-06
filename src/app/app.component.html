@@ -14,13 +14,14 @@
   @else {
     <button mat-icon-button 
             class="icon-connected" 
-            aria-label="Open Otto remote">
+            aria-label="Open Otto remote"
+            (click)="openRemoteClicked()">
       <mat-icon>settings_remote</mat-icon>
     </button>
-    <button mat-icon-button 
-            (click)="bluetoothDisconnectClicked()"
+    <button mat-icon-button
             class="icon-connected" 
-            aria-label="Disconnect bluetooth button">
+            aria-label="Disconnect bluetooth button"
+            (click)="bluetoothDisconnectClicked()">
       <mat-icon>bluetooth_connected</mat-icon>
     </button>
   }
