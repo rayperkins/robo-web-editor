@@ -1,0 +1,73 @@
+<h2 mat-dialog-title>Otto Calibrate</h2>
+<mat-dialog-content class="fx-column fx-align-center">
+  <svg width="270" height="300" class="fx-flex-0-0">
+    <!-- Head and body -->
+    <rect x="50" y="0" rx="5" ry="5" width="170" height="80" stroke="teal" stroke-width="2" fill="#33db00" />
+    <circle r="20" cx="105" cy="35" stroke="gray" stroke-width="2" fill="black" />
+    <circle r="20" cx="165" cy="35" stroke="gray" stroke-width="2" fill="black" />
+    <rect x="48" y="76" rx="5" ry="5" width="174" height="80" stroke="gray" stroke-width="2" fill="silver" />
+    <!-- Left leg and foot -->
+    <rect x="50" y="158" rx="5" ry="5" width="50" height="80" stroke="gray" stroke-width="2" fill="silver" />
+    <rect x="0" y="240" rx="2" ry="2" width="100" height="5" stroke="gray" stroke-width="2" fill="silver" />
+
+    <!-- Right  leg and foot -->
+    <rect x="170" y="158" rx="5" ry="5" width="50" height="80" stroke="gray" stroke-width="2" fill="silver" />
+    <rect x="170" y="240" rx="2" ry="2" width="100" height="5" stroke="gray" stroke-width="2" fill="silver" />
+  </svg>
+  <div class="fx-row">
+    <mat-card class="fx-flex-0-0 m-2">
+      <mat-card-content>
+        <h2>Right side</h2>
+        <div>
+          <label id="example-name-label" class="example-name-label">Leg</label>
+          <mat-slider showTickMarks discrete class="calibrate-slider"
+              [max]="180"
+              [min]="0"
+              [step]="1"
+              [displayWith]="formatSliderLabel">
+              <input matSliderThumb [formControl]="rightLegControl" (valueChange)="updateCalibration()">
+          </mat-slider>
+        </div>
+        <div>
+          <label id="example-name-label" class="example-name-label">Foot</label>
+          <mat-slider showTickMarks discrete class="calibrate-slider"
+              [max]="180"
+              [min]="0"
+              [step]="1"
+              [displayWith]="formatSliderLabel">
+              <input matSliderThumb [formControl]="rightFootControl" (valueChange)="updateCalibration()">
+          </mat-slider>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="fx-flex-0-0 m-2">
+      <mat-card-content>
+        <h2>Left side</h2>
+        <div>
+          <label id="example-name-label" class="example-name-label">Leg</label>
+          <mat-slider showTickMarks discrete class="calibrate-slider"
+              [max]="180"
+              [min]="0"
+              [step]="1"
+              [displayWith]="formatSliderLabel">
+              <input matSliderThumb [formControl]="leftLegControl" (valueChange)="updateCalibration()">
+          </mat-slider>
+        </div>
+        <div>
+          <label id="example-name-label" class="example-name-label">Foot</label>
+          <mat-slider showTickMarks discrete class="calibrate-slider"
+              [max]="180"
+              [min]="0"
+              [step]="1"
+              [displayWith]="formatSliderLabel">
+              <input matSliderThumb [formControl]="leftFootControl" (valueChange)="updateCalibration()">
+          </mat-slider>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Close</button>
+  <button mat-flat-button (click)="saveCalibration()">Save</button>
+</mat-dialog-actions>

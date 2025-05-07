@@ -1,0 +1,21 @@
+
+.control-button-container {
+    display: grid;
+    grid-template-columns: 50px 50px 50px;
+    grid-template-rows: 50px 50px 50px;
+    margin-right: 15px;
+}
+
+.control-button-container button {
+    margin: 5px;
+}
+
+
+.action-button-container button {
+    margin: 2px;
+}
+
+.calibrate-slider {
+    width: 160px;
+}
+

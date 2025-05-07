@@ -14,6 +14,7 @@ import { OttoService } from './otto/otto.service';
 import { OttoDevice } from './otto/otto.device';
 import { DisconnectBluetoothDialog} from './shared/disconnect-bluetooth-dialog/disconnect-bluetooth-dialog';
 import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
+import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate-dialog';
 
 @Component({
     selector: 'app-root',
@@ -50,29 +51,44 @@ export class AppComponent {
         shareReplay()
         );
 
-    bluetoothConnectClicked() {
-        this.isConnecting$.next(true);
-        this.ottoService.discover().subscribe({next: (device) =>
-        {
-            device.connect().subscribe({next: (isConnected) => {
-                this.isConnecting$.next(false);
-                if(isConnected) {
-                    console.log('connected!!!');
-
-                    this.connectedDevice = device;
-                    // this.connectedDevice.sendCommand('victory').subscribe({
-                    //     next: () => console.log('command sent!')
-                    // });
-                }
-            }, error: () => this.isConnecting$.next(false)});
-
-        }, error: () => this.isConnecting$.next(false)});
-    }
-
-    bluetoothDisconnectClicked() {
+    bluetoothConnectionClicked() {
         if(this.connectedDevice) {
             this.dialog
                 .open(DisconnectBluetoothDialog)
+                .afterClosed()
+                .subscribe({next: result => {
+                    if(result !== undefined) {
+                        this.connectedDevice.disconnect();
+                        this.connectedDevice = null;
+                    }
+                }});
+        }
+        else {
+            this.isConnecting$.next(true);
+            this.ottoService.discover().subscribe({next: (device) =>
+            {
+                device.connect().subscribe({next: (isConnected) => {
+                    this.isConnecting$.next(false);
+                    if(isConnected) {
+                        console.log('connected!!!');
+
+                        this.connectedDevice = device;
+                        // this.connectedDevice.sendCommand('victory').subscribe({
+                        //     next: () => console.log('command sent!')
+                        // });
+                    }
+                }, error: () => this.isConnecting$.next(false)});
+
+            }, error: () => this.isConnecting$.next(false)});
+        }
+    }
+
+    openCalibrateClicked() {
+        if(this.connectedDevice) {
+            this.dialog
+                .open(OttoCalibrateDialog, {
+                    data: this.connectedDevice
+                })
                 .afterClosed()
                 .subscribe({next: result => {
                     if(result !== undefined) {
