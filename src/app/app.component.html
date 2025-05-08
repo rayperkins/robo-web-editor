@@ -3,11 +3,11 @@
     <span class="fx-flex"></span>
 
     <button mat-icon-button 
-        aria-label="Otto Calibrate"
-        [disabled]="!connectedDevice"
+        (click)="bluetoothConnectionClicked()"
         [class.icon-connected]="connectedDevice"
-        (click)="openCalibrateClicked()">
-        <mat-icon>tune</mat-icon>
+        [disabled]="isConnecting$.value"
+        aria-label="Connect bluetooth button">
+        <mat-icon>{{!connectedDevice ? 'bluetooth' : 'bluetooth_connected'}}</mat-icon>
     </button>
     <button mat-icon-button
         aria-label="Otto Remote"
@@ -17,11 +17,11 @@
         <mat-icon>settings_remote</mat-icon>
     </button>
     <button mat-icon-button 
-        (click)="bluetoothConnectionClicked()"
+        aria-label="Otto Calibrate"
+        [disabled]="!connectedDevice"
         [class.icon-connected]="connectedDevice"
-        [disabled]="isConnecting$.value"
-        aria-label="Connect bluetooth button">
-        <mat-icon>{{!connectedDevice ? 'bluetooth' : 'bluetooth_connected'}}</mat-icon>
+        (click)="openCalibrateClicked()">
+        <mat-icon>tune</mat-icon>
     </button>
   <button mat-icon-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon">
     <mat-icon>favorite</mat-icon>
