@@ -1,0 +1,16 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build Arduino Tests",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug ./ & make",
+            "options": {
+                "cwd": "${workspaceFolder}/arduino/tests"
+            },
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Configures & Build tests",   
+        }
+    ],
+    "version": "2.0.0"
+}

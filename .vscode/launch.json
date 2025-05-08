@@ -10,6 +10,17 @@
             "type": "msedge",
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Arduino Tests",
+            "type": "cppdbg",
+            "cwd": "${workspaceFolder}/arduino/tests/bin",
+            "request": "launch",
+            "program": "${workspaceFolder}/arduino/tests/bin/tests",
+            "args": [ ],
+            "stopAtEntry": false,
+            "preLaunchTask": "Build Arduino Tests"
+            // other options...
         }
     ]
 }
