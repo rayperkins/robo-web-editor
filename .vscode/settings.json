@@ -6,6 +6,9 @@
         "functional": "cpp",
         "string_view": "cpp",
         "regex": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "compare": "cpp",
+        "chrono": "cpp",
+        "variant": "cpp"
     }
 }
