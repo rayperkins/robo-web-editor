@@ -19,7 +19,7 @@
 #define OPCODE_use "use"
 #define OPCODE_stor "stor"
 #define OPCODE_load "load"
-#define OPCODE_jump "jump"
+#define OPCODE_jmp "jmp"
 #define OPCODE_jmpe "jmpe"
 #define OPCODE_jmpn "jmpn"
 #define OPCODE_jmpp "jmpp"
@@ -31,6 +31,16 @@
 class CodeInterpreter
 {
 public:
+
+  CodeInterpreter() {
+    _current = 0;
+    _instructionIndex = 0;
+    _instructionCount = 0;
+    _variableCount = 0;
+
+    memset(_variables, 0, sizeof(_variables));
+  }
+
   virtual bool handle_instruction(const char* instruction, char length) { return false; }
 
   int getInstructionCount() {
@@ -49,7 +59,11 @@ public:
     _variables[index] = value;
   }
 
-  bool hasExited() {
+  int currentInstruction() {
+    return _instructionIndex;
+  }
+
+  bool completed() {
     return _instructionIndex < _instructionCount ? false : true;
   }
 
@@ -71,14 +85,34 @@ public:
       return false;
     }
 
-    const char * end = opcode + opcodeLength;
-    while(opcode < end && *opcode != '\0') {
+    // ignore checking null termination
+    if(opcodeLength > 0 && opcode[opcodeLength - 1] == '\0') {
+      opcodeLength -= 1;
+    }
+
+    if(instructionLength > 0 && instruction[instructionLength - 1] == '\0') {
+      instructionLength -= 1;
+    }
+
+    // opcode in form of 'jmp' and instruction 'jmp 1234' 
+    // loop and check opcode is in instruction
+    const char * opcodeEnd = opcode + opcodeLength;
+    const char * instructionEnd = instruction + instructionLength;
+
+    while(opcode < opcodeEnd) {
       if(*opcode != *instruction) {
         return false;
       }
 
       opcode++;
       instruction++;
+    }
+
+    // instruction starts with opcode, but instruction may have additional chars
+    // confirm that the next is whitespace
+    if(instruction < instructionEnd 
+      && isalnum(*instruction)) {
+        return false;
     }
 
     return true;
@@ -91,14 +125,20 @@ public:
   int getArg(const char* opcode, int opcodeLength, const char* instruction, int instructionLength) {
     const char * start = instruction + opcodeLength;
     const char * end = instruction + instructionLength;
+    bool isVariableIndex = false;
     char sign = 1;
     char places = 0;
     int value = 0;
+    
     while (start < end)
     {
       // assume value in form of 12345 or -12345
       if(*start == '-' && places == 0) {
         sign = -1;
+        start ++;
+      }
+      else if(*start == '#' && places == 0) {
+        isVariableIndex = true;
         start ++;
       }
       
@@ -111,7 +151,9 @@ public:
       start ++;
     }
 
-    return value * sign;
+    // TODO: out of range check for variable index? and int16_t size?
+
+    return isVariableIndex ? _variables[value] : value * sign;
   }
 
   void step() {
@@ -143,9 +185,9 @@ public:
           _current = _variables[arg];
         }
       }
-      else if (_ISOPCODE(OPCODE_jump, instruction, length)) {
-        if(_HASARG(OPCODE_jump, instruction, length)) {
-          int arg = _GETARG(OPCODE_jump, instruction, length);
+      else if (_ISOPCODE(OPCODE_jmp, instruction, length)) {
+        if(_HASARG(OPCODE_jmp, instruction, length)) {
+          int arg = _GETARG(OPCODE_jmp, instruction, length);
           _instructionIndex = arg < 0 ? 0 : (arg - 1);
         }
       }

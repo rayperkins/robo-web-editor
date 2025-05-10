@@ -21,7 +21,7 @@ public:
 
 TEST_CASE( "clearInstruction", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    interpreter.setInstruction(0, "forward", sizeof("forward"));
+    interpreter.setInstruction(0, "use 0", sizeof("use 0"));
     interpreter.clearInstructions();
 
     REQUIRE( interpreter.getInstructionCount() == 0 );
@@ -29,72 +29,83 @@ TEST_CASE( "clearInstruction", "[CodeInterpreter]" ) {
 
 TEST_CASE( "setInstruction", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    interpreter.setInstruction(0, "forward", sizeof("forward"));
-    interpreter.setInstruction(1, "backward", sizeof("backward"));    
-    interpreter.setInstruction(2, "stop", sizeof("stop"));
+    interpreter.setInstruction(0, "use 0", sizeof("use 0"));
+    interpreter.setInstruction(1, "add 1", sizeof("add 1"));    
+    interpreter.setInstruction(2, "stor 0", sizeof("stor 0"));
 
     REQUIRE( interpreter.getInstructionCount() == 3 );
 }
 
 TEST_CASE( "step", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    interpreter.setInstruction(0, "forward", sizeof("forward"));
-    interpreter.setInstruction(1, "backward", sizeof("backward"));    
-    interpreter.setInstruction(2, "stop", sizeof("stop"));
+    interpreter.setInstruction(0, "use 0", sizeof("use 0"));
+    interpreter.setInstruction(1, "add 1", sizeof("add 1"));    
+    interpreter.setInstruction(2, "stor 0", sizeof("stor 0"));
 
     REQUIRE( interpreter.getInstructionCount() == 3 );
 
     interpreter.step();
-    REQUIRE( interpreter.stepCount == 1 );
+    REQUIRE( interpreter.currentInstruction() == 1 );
     interpreter.step();
-    REQUIRE( interpreter.stepCount == 2 );
+    REQUIRE( interpreter.currentInstruction() == 2 );
     interpreter.step();
-    REQUIRE( interpreter.stepCount == 3 );
+    REQUIRE( interpreter.currentInstruction() == 3 );
 }
 
 TEST_CASE( "isOpcode", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.isOpcode("forward", sizeof("forward"), "forward 123", sizeof("forward 123")) == true );
+    REQUIRE( interpreter.isOpcode("use", sizeof("use"), "use 123", sizeof("use 123")) == true );
 }
 
 TEST_CASE( "isOpcode is false", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.isOpcode("notforward", sizeof("notforward"), "forward 123", sizeof("forward 123")) == false );
+    REQUIRE( interpreter.isOpcode("notuse", sizeof("notuse"), "use 123", sizeof("use 123")) == false );
+}
+
+TEST_CASE( "isOpcode checks whitespace", "[CodeInterpreter]" ) {
+    TestCodeInterpreter interpreter;
+    REQUIRE( interpreter.isOpcode("jmp", sizeof("jmp"), "jmpe 123", sizeof("jmpe 123")) == false );
 }
 
 TEST_CASE( "hasArg", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.hasArg("forward", sizeof("forward"), "forward 123", sizeof("forward 123")) == true );
+    REQUIRE( interpreter.hasArg("use", sizeof("use"), "use 123", sizeof("use 123")) == true );
 }
 
 TEST_CASE( "hasArg is false", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.hasArg("forward", sizeof("forward"), "forward", sizeof("forward")) == false );
+    REQUIRE( interpreter.hasArg("use", sizeof("use"), "use", sizeof("use")) == false );
 }
 
 TEST_CASE( "getArg", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.getArg("forward", sizeof("forward"), "forward 123", sizeof("forward 123")) == 123 );
+    REQUIRE( interpreter.getArg("use", sizeof("use"), "use 123", sizeof("use 123")) == 123 );
 }
 
 TEST_CASE( "getArg is negative", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( interpreter.getArg("forward", sizeof("forward"), "forward -123", sizeof("forward -123")) == -123 );
+    REQUIRE( interpreter.getArg("use", sizeof("use"), "use -123", sizeof("use -123")) == -123 );
+}
+
+TEST_CASE( "getArg is variable", "[CodeInterpreter]" ) {
+    TestCodeInterpreter interpreter;
+    interpreter.setVariable(1, 123);
+    REQUIRE( interpreter.getArg("use", sizeof("use"), "use #1", sizeof("use #1")) == 123 );
 }
 
 TEST_CASE( "INSTRUCTION_ISOPCODE", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( INSTRUCTION_ISOPCODE(interpreter, "forward", "forward 123", sizeof("forward 123")) == true );
+    REQUIRE( INSTRUCTION_ISOPCODE(interpreter, "use", "use 123", sizeof("use 123")) == true );
 }
 
 TEST_CASE( "INSTRUCTION_HASARG", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( INSTRUCTION_HASARG(interpreter, "forward", "forward 123", sizeof("forward 123")) == true );
+    REQUIRE( INSTRUCTION_HASARG(interpreter, "use", "use 123", sizeof("use 123")) == true );
 }
 
 TEST_CASE( "INSTRUCTION_GETARG", "[CodeInterpreter]" ) {
     TestCodeInterpreter interpreter;
-    REQUIRE( INSTRUCTION_GETARG(interpreter, "forward", "forward 123", sizeof("forward 123")) == 123 );
+    REQUIRE( INSTRUCTION_GETARG(interpreter, "use", "use 123", sizeof("use 123")) == 123 );
 }
 
 // for loop
@@ -111,13 +122,12 @@ TEST_CASE( "for loop", "[CodeInterpreter]" ) {
     SETINSTRUCTION(interpreter, 7, "stor 1");
     SETINSTRUCTION(interpreter, 8, "load 0"); // end of loop body, increment variable 0
     SETINSTRUCTION(interpreter, 9, "add 1"); 
-    SETINSTRUCTION(interpreter, 10, "jump 2");
+    SETINSTRUCTION(interpreter, 10, "jmp 2");
     SETINSTRUCTION(interpreter, 11, "exit");
 
     int stepCount = 0;
 
-    while(interpreter.getVariable(1) < 10
-        && !interpreter.hasExited()
+    while(!interpreter.completed()
         && stepCount < 100) {
         interpreter.step();
         stepCount++;

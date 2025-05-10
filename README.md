@@ -33,6 +33,7 @@ Open the sketch under the arduino folder in the Arduino IDE, set the target the 
 Each instruction line is allocated 20 bytes (BLE packet size).
 Supports only 16bit integers: -32,768 to +32,767
 Has max of 10000 lines. 
+a '#' in front of the constant indicates a variable address
 
 The BLE packet to set a particular instruction line is:
 ```
@@ -66,10 +67,10 @@ div 32767
 mul 32767
 
 // Add, subtract, divide or multiply variable to current
-addv #variableIndex
-subv #variableIndex
-divv #variableIndex
-mulv #variableIndex
+add #variableIndex
+sub #variableIndex
+div #variableIndex
+mul #variableIndex
 
 // example of a for loop, ie: for(  = 0; i < 10; i++)
 00 use 0    // set current to 0
