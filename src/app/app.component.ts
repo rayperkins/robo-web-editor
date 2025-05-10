@@ -23,9 +23,9 @@ import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate
     imports: [
       MatToolbarModule,
       MatButtonModule,
+      MatIconModule,
       MatSidenavModule,
       MatListModule,
-      MatIconModule,
       AsyncPipe,
       BlocklyComponent
     ]

@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import { Observable, Subject, Subscriber } from "rxjs";
 import { Logger } from "../logger";
 
 export class OttoDevice {
@@ -57,32 +57,62 @@ export class OttoDevice {
         this.disconnectIfConnected();
     }
 
-    public sendCommand(command: string): Observable<boolean> {
-        const observable = new Observable<boolean>(observer => {
-            // check is connected
-            if(this._gattServer?.connected !== true || !this._gattCharacteristic) {
-                observer.next(false);
-                observer.complete();
-            }
-            // that encoding is supported
-            else if (!("TextEncoder" in window)) {
+    public sendCommand(command: string): Observable<number> {
+        return this.sendCommands([command]);
+    }
+
+    public sendCommands(commands: string[]): Observable<number> {
+        const subject = new Subject<number>();
+        const observable = new Observable<number>(observer => {
+            // check that encoding is supported
+            if (!("TextEncoder" in window)) {
                 observer.error("TextEncoder is not supported");
                 observer.complete();
+                return;
             }
-            // now good to send data
-            else {
-                Logger.log('sending data ', this._bleDevice, ' ', command);
-                const enc = new TextEncoder(); // always utf-8
 
-                this._gattCharacteristic
-                    .writeValue(enc.encode(command))
-                    .then(() => observer.next(true))
-                    .catch(error => observer.error(error))
-                    .finally(() => observer.complete());
-            }
+            // trigger  first command to send
+            this.sendCommandInternal(observer, commands, 0);
+        }).subscribe({
+            next: value => subject.next(value),
+            error: err => subject.error(err),
+            complete: () => subject.complete()
         });
 
-        return observable;
+        return subject;
+    }
+
+    // Recursively send commands and then complete the observer
+    private sendCommandInternal(observer: Subscriber<number>, commands: string[], currentIndex: number) {
+        // check is connected
+        if(this._gattServer?.connected !== true || !this._gattCharacteristic) {
+            observer.error("not connected");
+            observer.complete();
+            return;
+        }
+
+        const command = commands[currentIndex];
+
+        Logger.log('sending data ', this._bleDevice, ' ', command);
+        const enc = new TextEncoder(); // always utf-8
+        this._gattCharacteristic
+            .writeValue(enc.encode(command))
+            .then(() => {
+                observer.next(currentIndex);
+
+                currentIndex ++;
+
+                if(currentIndex < commands.length) {
+                    this.sendCommandInternal(observer, commands, currentIndex);
+                }
+                else {
+                    observer.complete();
+                }
+            })
+            .catch(error => {
+                observer.error(error);
+                observer.complete();
+            });
     }
     
 

@@ -109,7 +109,7 @@ void setup() {
   // SETINSTRUCTION(codeInterpreter, 2, "stop");
   // SETINSTRUCTION(codeInterpreter, 3, "victory");
   // SETINSTRUCTION(codeInterpreter, 4, "jmp 0");
-  // codeInterpreter.enable();
+  // codeInterpreter.start();
   v = 0;
 }
 
@@ -215,6 +215,7 @@ void checkBluetooth() {
     else if (strstr(charBuffer, "stop") == &charBuffer[0]) {
       command = "stop";
       Stop();
+      codeInterpreter.stop();
     }
     else if (strstr(charBuffer, "ultrasound") == &charBuffer[0]) {
       Stop();
@@ -272,6 +273,39 @@ void checkBluetooth() {
       command = "";
       readChar('s');
     }
+    else if (strstr(charBuffer, "clear") == &charBuffer[0]) {
+      codeInterpreter.clearInstructions();
+    }
+    else if (strstr(charBuffer, "start") == &charBuffer[0]) {
+      codeInterpreter.start();
+    }
+    // interpreter commands
+    else if (strstr(charBuffer, "set") == &charBuffer[0]
+      && isdigit(charBuffer[3])) {
+      // command in the form 'set9999 add -32768'
+      // first loop out the index number after 'set'
+      char chIndex = 3;
+      char instructionIndex = 0;
+
+      while(chIndex < numberOfBytesReceived) {
+        if(!isdigit(charBuffer[chIndex])) {
+          break;
+        }
+
+        // for each digit, shift the previous digit up by 10 and add the new
+        instructionIndex *= 10;
+        instructionIndex += charBuffer[chIndex] - 0x30;
+        chIndex++;
+      }
+
+      // now chIndex should point at the the space after the index number
+      // validate this and treat the remaining chars as the instruction
+      if(charBuffer[chIndex] == ' ') {
+        chIndex++;
+        codeInterpreter.setInstruction(instructionIndex, &charBuffer[chIndex], numberOfBytesReceived - chIndex);
+      }
+    }
+
   }
 }
 

@@ -9,6 +9,7 @@
         "iosfwd": "cpp",
         "compare": "cpp",
         "chrono": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "cstring": "cpp"
     }
 }

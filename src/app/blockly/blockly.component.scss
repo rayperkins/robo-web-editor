@@ -1,9 +1,18 @@
 :host {
   display: flex !important;
-  flex-direction: row;
+  flex-direction: column;
+  position: relative;
 }
 
 #blocklyDiv {
   flex: 1 0 auto;
   min-width: 1px;
+}
+
+#blocklyButtons {
+  position: absolute;
+  z-index: 1;
+  right: 0px;
+  margin-top: 15px;
+  margin-right: 20px;
 }

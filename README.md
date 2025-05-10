@@ -76,7 +76,7 @@ mul #variableIndex
 00 use 0    // set current to 0
 01 stor #0  // store 0 into variable 0
 02 use 10   // set current to 10
-03 subv #0  // subtract, ie 10 - 0 = 10
+03 sub #0  // subtract, ie 10 - 0 = 10
 04 jmpe 10  // jump to 123 if the result is 0
 05 ...      // body of loop
 06 load #0  // load variable 0
@@ -99,3 +99,9 @@ speed 5
 stop
 ```
 
+## Todo list
+
+- arduino, send data to computer, such as current state (idle/running) and sensor data. eg: computer sends `state` then device replies with `state=01,d100`
+- arduino, expand otto command set
+- editor, code generator and basic blocks for motion
+- editor, handle disconnects, maybe show toast on connect/disconnect

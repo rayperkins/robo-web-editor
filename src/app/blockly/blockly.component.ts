@@ -21,18 +21,29 @@
  * @author samelh@google.com (Sam El-Husseini)
  */
 
-import {Component, OnInit} from '@angular/core';
+import {Component, input, OnInit} from '@angular/core';
 
 import * as Blockly from 'blockly';
 import {BlocklyOptions} from 'blockly';
+import { OttoDevice } from '../otto/otto.device';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
     selector: 'app-blockly',
     templateUrl: './blockly.component.html',
     styleUrls: ['./blockly.component.scss'],
     standalone: true,
+    imports: [
+      MatButtonModule,
+      MatIconModule
+    ]
 })
 export class BlocklyComponent implements OnInit {
+
+  // connected otto device (optional)
+  connectedDevice = input<OttoDevice|null>(null); 
+
   constructor() {}
 
   ngOnInit() {
@@ -117,5 +128,22 @@ export class BlocklyComponent implements OnInit {
       },
       toolbox,
     } as BlocklyOptions);
+  }
+
+  runProgramClicked() {
+    const device = this.connectedDevice();
+    if (device != null) {
+      const commands = [
+        'clear',
+        'set0 forward 1',
+        'set1 wait 2000',
+        'set2 backward 1',
+        'set3 wait 2000',
+        'set4 jmp 0',
+        'start'
+      ];
+
+      device.sendCommands(commands);
+    }
   }
 }
