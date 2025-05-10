@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "code_interpreter.h"
 
-#define SETINSTRUCTION(interpreter, index, instruction) interpreter.setInstruction(index, instruction, sizeof(instruction))
+
 
 class TestCodeInterpreter : public CodeInterpreter {
 public:

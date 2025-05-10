@@ -19,6 +19,7 @@
 #include <BTstackLib.h>
 #include "otto_config.h"
 #include "otto_sensors.h"
+#include "otto_code_interpreter.h"
 
 #define LEFTLEG 21
 #define RIGHTLEG 19
@@ -55,6 +56,7 @@ bool calibration = false;
   
 Otto Ottobot;
 OttoSensors sensors;
+OttoCodeInterpreter codeInterpreter;
 
 // SENSORS IN CORE 1
 void setup1() {
@@ -69,6 +71,7 @@ void loop1() {
 void setup() {
   rp2040.idleOtherCore();
   OttoConfig.setup();
+  codeInterpreter.setup(&Ottobot);
 
   rp2040.resumeOtherCore();
 
@@ -100,13 +103,21 @@ void setup() {
   BTstack.startAdvertising();
   
   Ottobot.home();
+
+  // SETINSTRUCTION(codeInterpreter, 0, "forward 1");
+  // SETINSTRUCTION(codeInterpreter, 1, "wait 5000");
+  // SETINSTRUCTION(codeInterpreter, 2, "stop");
+  // SETINSTRUCTION(codeInterpreter, 3, "victory");
+  // SETINSTRUCTION(codeInterpreter, 4, "jmp 0");
+  // codeInterpreter.enable();
   v = 0;
 }
 
 void loop() {
-  //Ottobot.walk(1, move_speed[n], FORWARD);
   BTstack.loop();
   checkBluetooth();//if something is coming at us
+
+  codeInterpreter.loop();
   
   if (command == "forward") {
     Forward();

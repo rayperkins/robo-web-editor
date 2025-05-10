@@ -7,13 +7,14 @@
 #define INSTRUCTION_LIST_ITEM_SIZE (INSTRUCTION_SIZE + 1)
 #define INSTRUCTION_LIST_SIZE (512)
 
+#define SETINSTRUCTION(interpreter, index, instruction) interpreter.setInstruction(index, instruction, sizeof(instruction))
 #define INSTRUCTION_ISOPCODE(interpreter, opcode, instruction, length) (interpreter.isOpcode(opcode, sizeof(opcode), instruction, length) == true)
 #define INSTRUCTION_HASARG(interpreter, opcode, instruction, length) (interpreter.hasArg(opcode, sizeof(opcode), instruction, length) == true)
 #define INSTRUCTION_GETARG(interpreter, opcode, instruction, length) (interpreter.getArg(opcode, sizeof(opcode), instruction, length))
 
-#define _ISOPCODE(opcode, instruction, length) (isOpcode(opcode, sizeof(opcode), instruction, length) == true)
-#define _HASARG(opcode, instruction, length) (hasArg(opcode, sizeof(opcode), instruction, length) == true)
-#define _GETARG(opcode, instruction, length) (getArg(opcode, sizeof(opcode), instruction, length))
+#define ISOPCODE(opcode, instruction, length) (isOpcode(opcode, sizeof(opcode), instruction, length) == true)
+#define HASARG(opcode, instruction, length) (hasArg(opcode, sizeof(opcode), instruction, length) == true)
+#define GETARG(opcode, instruction, length) (getArg(opcode, sizeof(opcode), instruction, length))
 
 #define OPCODE_exit "exit"
 #define OPCODE_use "use"
@@ -47,7 +48,12 @@ public:
     return _instructionCount;
   }
 
+  void reset() {
+    _instructionIndex = 0;
+  }
+
   void clearInstructions() {
+    _instructionIndex = 0;
     _instructionCount = 0;
   }
 
@@ -71,7 +77,7 @@ public:
     // copy instruction to list if space
     // and if successful, null terminate and update index
     if(index < INSTRUCTION_LIST_SIZE && length <= INSTRUCTION_SIZE) {
-      mempcpy(_instructions[index], instruction, length);
+      memcpy(_instructions[index], instruction, length);
       _instructions[index][INSTRUCTION_SIZE] = length; // convention to store length at end
 
       if(_instructionCount < (index + 1)) {
@@ -165,80 +171,80 @@ public:
       if(length == 0) {
         // do nothing this step
       }
-      else if (_ISOPCODE(OPCODE_exit, instruction, length)) {
+      else if (ISOPCODE(OPCODE_exit, instruction, length)) {
         _instructionIndex = _instructionCount;
       }
-      else if (_ISOPCODE(OPCODE_use, instruction, length)) {
-        if(_HASARG(OPCODE_use, instruction, length)) {
-          _current = _GETARG(OPCODE_use, instruction, length);
+      else if (ISOPCODE(OPCODE_use, instruction, length)) {
+        if(HASARG(OPCODE_use, instruction, length)) {
+          _current = GETARG(OPCODE_use, instruction, length);
         }
       }
-      else if (_ISOPCODE(OPCODE_stor, instruction, length)) {
-        if(_HASARG(OPCODE_stor, instruction, length)) {
-          int arg = _GETARG(OPCODE_stor, instruction, length);
+      else if (ISOPCODE(OPCODE_stor, instruction, length)) {
+        if(HASARG(OPCODE_stor, instruction, length)) {
+          int arg = GETARG(OPCODE_stor, instruction, length);
           _variables[arg] = _current;
         }
       }
-      else if (_ISOPCODE(OPCODE_load, instruction, length)) {
-        if(_HASARG(OPCODE_load, instruction, length)) {
-          int arg = _GETARG(OPCODE_load, instruction, length);
+      else if (ISOPCODE(OPCODE_load, instruction, length)) {
+        if(HASARG(OPCODE_load, instruction, length)) {
+          int arg = GETARG(OPCODE_load, instruction, length);
           _current = _variables[arg];
         }
       }
-      else if (_ISOPCODE(OPCODE_jmp, instruction, length)) {
-        if(_HASARG(OPCODE_jmp, instruction, length)) {
-          int arg = _GETARG(OPCODE_jmp, instruction, length);
+      else if (ISOPCODE(OPCODE_jmp, instruction, length)) {
+        if(HASARG(OPCODE_jmp, instruction, length)) {
+          int arg = GETARG(OPCODE_jmp, instruction, length);
           _instructionIndex = arg < 0 ? 0 : (arg - 1);
         }
       }
-      else if (_ISOPCODE(OPCODE_jmpe, instruction, length)) {
+      else if (ISOPCODE(OPCODE_jmpe, instruction, length)) {
         // jump if current is 0 (ie, the result of comparing)
         if(_current == 0) {
-          if(_HASARG(OPCODE_jmpe, instruction, length)) {
-            int arg = _GETARG(OPCODE_jmpe, instruction, length);
+          if(HASARG(OPCODE_jmpe, instruction, length)) {
+            int arg = GETARG(OPCODE_jmpe, instruction, length);
             _instructionIndex = arg < 0 ? 0 : (arg - 1);
           }
         }
       }
-      else if (_ISOPCODE(OPCODE_jmpn, instruction, length)) {
+      else if (ISOPCODE(OPCODE_jmpn, instruction, length)) {
         // jump if current is negative (ie, the result of comparing)
         if(_current < 0) {
-          if(_HASARG(OPCODE_jmpn, instruction, length)) {
-            int arg = _GETARG(OPCODE_jmpn, instruction, length);
+          if(HASARG(OPCODE_jmpn, instruction, length)) {
+            int arg = GETARG(OPCODE_jmpn, instruction, length);
             _instructionIndex = arg < 0 ? 0 : (arg - 1);
           }
         }
       }
-      else if (_ISOPCODE(OPCODE_jmpp, instruction, length)) {
+      else if (ISOPCODE(OPCODE_jmpp, instruction, length)) {
         // jump if current is positive (ie, the result of comparing)
         if(_current > 0) {
-          if(_HASARG(OPCODE_jmpp, instruction, length)) {
-            int arg = _GETARG(OPCODE_jmpp, instruction, length);
+          if(HASARG(OPCODE_jmpp, instruction, length)) {
+            int arg = GETARG(OPCODE_jmpp, instruction, length);
             _instructionIndex = arg < 0 ? 0 : (arg - 1);
           }
         }
       }
-      else if (_ISOPCODE(OPCODE_add, instruction, length)) {
-        if(_HASARG(OPCODE_add, instruction, length)) {
-          int arg = _GETARG(OPCODE_add, instruction, length);
+      else if (ISOPCODE(OPCODE_add, instruction, length)) {
+        if(HASARG(OPCODE_add, instruction, length)) {
+          int arg = GETARG(OPCODE_add, instruction, length);
           _current += arg;
         }
       }
-      else if (_ISOPCODE(OPCODE_sub, instruction, length)) {
-        if(_HASARG(OPCODE_sub, instruction, length)) {
-          int arg = _GETARG(OPCODE_sub, instruction, length);
+      else if (ISOPCODE(OPCODE_sub, instruction, length)) {
+        if(HASARG(OPCODE_sub, instruction, length)) {
+          int arg = GETARG(OPCODE_sub, instruction, length);
           _current -= arg;
         }
       }
-      else if (_ISOPCODE(OPCODE_div, instruction, length)) {
-        if(_HASARG(OPCODE_div, instruction, length)) {
-          int arg = _GETARG(OPCODE_div, instruction, length);
+      else if (ISOPCODE(OPCODE_div, instruction, length)) {
+        if(HASARG(OPCODE_div, instruction, length)) {
+          int arg = GETARG(OPCODE_div, instruction, length);
           _current /= arg;
         }
       }
-      else if (_ISOPCODE(OPCODE_mul, instruction, length)) {
-        if(_HASARG(OPCODE_mul, instruction, length)) {
-          int arg = _GETARG(OPCODE_mul, instruction, length);
+      else if (ISOPCODE(OPCODE_mul, instruction, length)) {
+        if(HASARG(OPCODE_mul, instruction, length)) {
+          int arg = GETARG(OPCODE_mul, instruction, length);
           _current *= arg;
         }
       }
