@@ -6,6 +6,7 @@
 #define INSTRUCTION_SIZE 20
 #define INSTRUCTION_LIST_ITEM_SIZE (INSTRUCTION_SIZE + 1)
 #define INSTRUCTION_LIST_SIZE (512)
+#define INSTRUCTION_LIST_MAX (512)
 
 #define SETINSTRUCTION(interpreter, index, instruction) interpreter.setInstruction(index, instruction, sizeof(instruction))
 #define INSTRUCTION_ISOPCODE(interpreter, opcode, instruction, length) (interpreter.isOpcode(opcode, sizeof(opcode), instruction, length) == true)
@@ -31,7 +32,13 @@
 
 class CodeInterpreter
 {
-public:
+public:  
+  int _instructionIndex = 0;
+  int _instructionCount = 0;
+  int _current = 0;
+  int _variableCount = 0;
+  int16_t _variables[VARIABLE_LIST_SIZE];
+  char _instructions[INSTRUCTION_LIST_SIZE][INSTRUCTION_LIST_ITEM_SIZE];
 
   CodeInterpreter() {
     _current = 0;
@@ -55,6 +62,10 @@ public:
   void clearInstructions() {
     _instructionIndex = 0;
     _instructionCount = 0;
+    
+    for(int i = 0; i < INSTRUCTION_LIST_SIZE; i++) {
+      memset(_instructions[i], 0, INSTRUCTION_LIST_ITEM_SIZE);
+    }
   }
 
   int16_t getVariable(int index) {
@@ -128,7 +139,7 @@ public:
     return (instructionLength > opcodeLength);
   }
 
-  int getArg(const char* opcode, int opcodeLength, const char* instruction, int instructionLength) {
+  int getArg(const char* opcode, int opcodeLength, const char* instruction, int instructionLength, bool useVariableLookup = false) {
     const char * start = instruction + opcodeLength;
     const char * end = instruction + instructionLength;
     bool isVariableIndex = false;
@@ -194,7 +205,7 @@ public:
       else if (ISOPCODE(OPCODE_jmp, instruction, length)) {
         if(HASARG(OPCODE_jmp, instruction, length)) {
           int arg = GETARG(OPCODE_jmp, instruction, length);
-          _instructionIndex = arg < 0 ? 0 : (arg - 1);
+          _instructionIndex = arg < 0 ? INSTRUCTION_LIST_MAX : (arg - 1);
         }
       }
       else if (ISOPCODE(OPCODE_jmpe, instruction, length)) {
@@ -202,7 +213,7 @@ public:
         if(_current == 0) {
           if(HASARG(OPCODE_jmpe, instruction, length)) {
             int arg = GETARG(OPCODE_jmpe, instruction, length);
-            _instructionIndex = arg < 0 ? 0 : (arg - 1);
+            _instructionIndex = arg < 0 ? INSTRUCTION_LIST_MAX : (arg - 1);
           }
         }
       }
@@ -211,7 +222,7 @@ public:
         if(_current < 0) {
           if(HASARG(OPCODE_jmpn, instruction, length)) {
             int arg = GETARG(OPCODE_jmpn, instruction, length);
-            _instructionIndex = arg < 0 ? 0 : (arg - 1);
+            _instructionIndex = arg < 0 ? INSTRUCTION_LIST_MAX : (arg - 1);
           }
         }
       }
@@ -220,7 +231,7 @@ public:
         if(_current > 0) {
           if(HASARG(OPCODE_jmpp, instruction, length)) {
             int arg = GETARG(OPCODE_jmpp, instruction, length);
-            _instructionIndex = arg < 0 ? 0 : (arg - 1);
+            _instructionIndex = arg < 0 ? INSTRUCTION_LIST_MAX : (arg - 1);
           }
         }
       }
@@ -264,17 +275,15 @@ public:
       //   // walk backwards
       // }
 
-      _instructionIndex++;
+      // increment steps, but check a clear hasn't been done in the mean time.
+      if(_instructionCount > 0) {
+        _instructionIndex++;
+      }
     }
   }
 
 private:
-  int _instructionIndex = 0;
-  int _current = 0;
-  int _variableCount = 0;
-  int16_t _variables[VARIABLE_LIST_SIZE];
-  int _instructionCount = 0;
-  char _instructions[INSTRUCTION_LIST_SIZE][INSTRUCTION_LIST_ITEM_SIZE];
+
 };
 
 #endif //CODE_INTERPRETER_H

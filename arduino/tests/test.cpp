@@ -115,9 +115,9 @@ TEST_CASE( "for loop", "[CodeInterpreter]" ) {
     SETINSTRUCTION(interpreter, 0, "use 0");
     SETINSTRUCTION(interpreter, 1, "stor 1"); // store 0 to variable 1
     SETINSTRUCTION(interpreter, 2, "stor 0"); // store 0 to variable 0
-    SETINSTRUCTION(interpreter, 3, "sub 10"); // prev result negative if loop not done
+    SETINSTRUCTION(interpreter, 3, "sub 10"); // prev result now negative if loop not done
     SETINSTRUCTION(interpreter, 4, "jmpe 11"); // jump to end if 0, ie loop is done
-    SETINSTRUCTION(interpreter, 5, "load 0"); // increment variable 1
+    SETINSTRUCTION(interpreter, 5, "load 1"); // increment variable 1
     SETINSTRUCTION(interpreter, 6, "add 1"); // increment variable 1
     SETINSTRUCTION(interpreter, 7, "stor 1");
     SETINSTRUCTION(interpreter, 8, "load 0"); // end of loop body, increment variable 0
@@ -135,3 +135,31 @@ TEST_CASE( "for loop", "[CodeInterpreter]" ) {
 
     REQUIRE( interpreter.getVariable(1) == 10 );
 }
+
+// for loop  from web
+// ['clear', 'set0 use 0', 'set1 stor 0', 'set2 sub 10', 'set3 jmpe 9', 'set4 backward 1', 'set5 forward 1', 'set6 load #0', 'set7 add 1', 'set8 jmp 1', 'start']
+TEST_CASE( "for loop from web", "[CodeInterpreter]" ) {
+    TestCodeInterpreter interpreter;
+    // example of a for loop, ie: for( i = 0; i < 10; i++)
+    SETINSTRUCTION(interpreter, 0, "use 0");
+    SETINSTRUCTION(interpreter, 1, "stor 0"); // store 0 to variable 1
+    SETINSTRUCTION(interpreter, 2, "sub 10"); // store 0 to variable 0
+    SETINSTRUCTION(interpreter, 3, "jmpe 9"); // prev result now negative if loop not done
+    SETINSTRUCTION(interpreter, 4, "backward 1"); // jump to end if 0, ie loop is done
+    SETINSTRUCTION(interpreter, 5, "forward 1"); // increment variable 1
+    SETINSTRUCTION(interpreter, 6, "load 0"); // increment variable 1
+    SETINSTRUCTION(interpreter, 7, "add 1");
+    SETINSTRUCTION(interpreter, 8, "jmp 1"); // end of loop body, increment variable 0
+
+    int stepCount = 0;
+
+    while(!interpreter.completed()
+        && stepCount < 100) {
+        interpreter.step();
+        stepCount++;
+    }
+
+    REQUIRE( stepCount < 100 );
+}
+
+

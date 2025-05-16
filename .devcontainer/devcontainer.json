@@ -15,7 +15,7 @@
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
                 "bazelbuild.vscode-bazel",
-                "ms-vscode.vscode-typescript-tslint-plugin",
+                "dbaeumer.vscode-eslint",
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-extension-pack",
 				"ms-vscode.cmake-tools"

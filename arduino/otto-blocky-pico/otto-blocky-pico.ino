@@ -27,6 +27,8 @@
 #define RIGHTFOOT 18
 #define BUZZER 14
 
+#define DEBUGSERIAL Serial
+
 static uint16_t characteristic_data_length = 0;
 static char characteristic_data_buffer[40];
 
@@ -53,6 +55,7 @@ const uint8_t adv_data[] = {
 };
 
 bool calibration = false;
+bool setupDone = false;
   
 Otto Ottobot;
 OttoSensors sensors;
@@ -65,22 +68,51 @@ void setup1() {
 
 void loop1() {
   sensors.loop();
+
+  if(!setupDone) {
+    return;
+  }
+
+  codeInterpreter.loop();
+
+  if (command == "forward") {
+    Forward();
+  }
+  else if (command == "backward") {
+    Backward();
+  }
+  else if (command == "right") {
+    Right();
+  }
+  else if (command == "left") {
+    Left();
+  }
+  else if (command == "avoidance") {
+    Avoidance();
+  }
+  else if (command == "force") {
+    UseForce();
+  }
 }
 
 // MAIN APP IN CORE 0
 void setup() {
-  rp2040.idleOtherCore();
+  //rp2040.idleOtherCore();
   OttoConfig.setup();
   codeInterpreter.setup(&Ottobot);
 
-  rp2040.resumeOtherCore();
+  DEBUGSERIAL.begin(115200);
 
-  Serial.begin(9600);
+  
 
   Ottobot.init(LEFTLEG, RIGHTLEG, LEFTFOOT, RIGHTFOOT, false, BUZZER);
   if(OttoConfig.isValid) {
     Ottobot.setTrims(OttoConfig.current.trimLeftLeg, OttoConfig.current.trimRightLeg, OttoConfig.current.trimLeftFoot, OttoConfig.current.trimRightFoot);
+
+    Ottobot.home();
   }
+
+  //rp2040.resumeOtherCore();
 
   BTstack.setup("Otto");
   // set callbacks
@@ -102,7 +134,7 @@ void setup() {
   BTstack.setAdvData(sizeof(adv_data), adv_data);
   BTstack.startAdvertising();
   
-  Ottobot.home();
+
 
   // SETINSTRUCTION(codeInterpreter, 0, "forward 1");
   // SETINSTRUCTION(codeInterpreter, 1, "wait 5000");
@@ -111,32 +143,12 @@ void setup() {
   // SETINSTRUCTION(codeInterpreter, 4, "jmp 0");
   // codeInterpreter.start();
   v = 0;
+  setupDone = true;
 }
 
 void loop() {
   BTstack.loop();
-  checkBluetooth();//if something is coming at us
-
-  codeInterpreter.loop();
-  
-  if (command == "forward") {
-    Forward();
-  }
-  else if (command == "backward") {
-    Backward();
-  }
-  else if (command == "right") {
-    Right();
-  }
-  else if (command == "left") {
-    Left();
-  }
-  else if (command == "avoidance") {
-    Avoidance();
-  }
-  else if (command == "force") {
-    UseForce();
-  }
+  checkBluetooth(); //if something is coming at us
 }
 
 void deviceConnectedCallback(BLEStatus status, BLEDevice *device) {
@@ -178,10 +190,11 @@ int gattWriteCallback(uint16_t value_handle, uint8_t *buffer, uint16_t size) {
 }
 
 void checkBluetooth() {
-  char charBuffer[20];//most we would ever see
+  char charBuffer[21];//most we would ever see
   
   if (characteristic_data_length > 0) {
     int numberOfBytesReceived = characteristic_data_length < 20 ? characteristic_data_length : 19;
+    memset(charBuffer, 0, sizeof(charBuffer));
     memcpy(charBuffer, characteristic_data_buffer, numberOfBytesReceived);
 
     characteristic_data_length = 0; // clear read buffer
@@ -194,12 +207,12 @@ void checkBluetooth() {
     }
 
     charBuffer[numberOfBytesReceived] = '\0';
-    n = charBuffer[numberOfBytesReceived-1]-'0';
     
-    PrintDebug("Received: '");
-    PrintDebug(charBuffer);
+    PrintDebug("checkBluetooth: %s", charBuffer);
 
+    n = charBuffer[numberOfBytesReceived-1]-'0';
     n = constrain(n, 0, 5);
+
     if (strstr(charBuffer, "forward") == &charBuffer[0]) {
       command = "forward";
     }   
@@ -213,7 +226,7 @@ void checkBluetooth() {
       command = "left";
     }
     else if (strstr(charBuffer, "stop") == &charBuffer[0]) {
-      command = "stop";
+      command = "";
       Stop();
       codeInterpreter.stop();
     }
@@ -277,6 +290,12 @@ void checkBluetooth() {
       codeInterpreter.clearInstructions();
     }
     else if (strstr(charBuffer, "start") == &charBuffer[0]) {
+      PrintDebug("starting program, index: %d, count: %d", codeInterpreter._instructionIndex, codeInterpreter._instructionCount);
+
+      for(int i = 0; i < codeInterpreter._instructionCount; i++) {
+        PrintDebug(codeInterpreter._instructions[i]);
+      }
+
       codeInterpreter.start();
     }
     // interpreter commands
@@ -416,17 +435,17 @@ void PrintDebug(const char* input...) {
   va_list args;
   va_start(args, input);
   for(const char* i=input; *i!=0; ++i) {
-    if(*i!='%') { Serial.print(*i); continue; }
+    if(*i!='%') { DEBUGSERIAL.print(*i); continue; }
     switch(*(++i)) {
-      case '%': Serial.print('%'); break;
-      case 's': Serial.print(va_arg(args, char*)); break;
-      case 'd': Serial.print(va_arg(args, int), DEC); break;
-      case 'b': Serial.print(va_arg(args, int), BIN); break;
-      case 'o': Serial.print(va_arg(args, int), OCT); break;
-      case 'x': Serial.print(va_arg(args, int), HEX); break;
-      case 'f': Serial.print(va_arg(args, double), 2); break;
+      case '%': DEBUGSERIAL.print('%'); break;
+      case 's': DEBUGSERIAL.print(va_arg(args, char*)); break;
+      case 'd': DEBUGSERIAL.print(va_arg(args, int), DEC); break;
+      case 'b': DEBUGSERIAL.print(va_arg(args, int), BIN); break;
+      case 'o': DEBUGSERIAL.print(va_arg(args, int), OCT); break;
+      case 'x': DEBUGSERIAL.print(va_arg(args, int), HEX); break;
+      case 'f': DEBUGSERIAL.print(va_arg(args, double), 2); break;
     }
   }
-  Serial.println();
+  DEBUGSERIAL.println();
   va_end(args);
 }

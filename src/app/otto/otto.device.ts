@@ -113,6 +113,24 @@ export class OttoDevice {
                 observer.error(error);
                 observer.complete();
             });
+        // setTimeout(() => this._gattCharacteristic
+        //     .writeValue(enc.encode(command))
+        //     .then(() => {
+        //         observer.next(currentIndex);
+
+        //         currentIndex ++;
+
+        //         if(currentIndex < commands.length) {
+        //             this.sendCommandInternal(observer, commands, currentIndex);
+        //         }
+        //         else {
+        //             observer.complete();
+        //         }
+        //     })
+        //     .catch(error => {
+        //         observer.error(error);
+        //         observer.complete();
+        //     }), 400);
     }
     
 

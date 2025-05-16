@@ -99,7 +99,7 @@ public:
       //PrintDebug("distance=%d", distance);
     }
 
-    process_microphone();
+    //process_microphone(); // TODO confirm this isnt getting stuck looping over aviailable
     
     if(_isCalibrating 
       && _mpu6050CalibrationCount >= MPU6050_CALIBRATION_SAMPLE_COUNT)

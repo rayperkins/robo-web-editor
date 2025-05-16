@@ -46,7 +46,6 @@ public:
 
     bool handle_instruction(const char* instruction, char length) { 
       bool handled = false;
-
       if(length == 0) {
         
       }
@@ -61,11 +60,12 @@ public:
         _ottobot->home();
           handled = true;
       }
-      
+
       // motion
       else if (ISOPCODE(CMD_backward, instruction, length)) {
         if(HASARG(CMD_backward, instruction, length)) {
           int arg = GETARG(CMD_backward, instruction, length);
+          _waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
           _ottobot->walk(arg, _speed, BACKWARD);
           handled = true;
         }
@@ -73,6 +73,7 @@ public:
       else if (ISOPCODE(CMD_forward, instruction, length)) {
         if(HASARG(CMD_forward, instruction, length)) {
           int arg = GETARG(CMD_forward, instruction, length);
+          _waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
           _ottobot->walk(arg, _speed, FORWARD);
           handled = true;
         }

@@ -2,6 +2,15 @@
     "tasks": [
         {
             "type": "shell",
+            "label": "Run Dev Server",
+            "command": "npm run start",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],  
+        },
+        {
+            "type": "shell",
             "label": "Build Arduino Tests",
             "command": "cmake -DCMAKE_BUILD_TYPE=Debug ./ & make",
             "options": {

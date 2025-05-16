@@ -9,7 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
-import { BlocklyComponent } from './blockly/blockly.component';
+import { EditorComponent } from './editor/editor.component';
 import { OttoService } from './otto/otto.service';
 import { OttoDevice } from './otto/otto.device';
 import { DisconnectBluetoothDialog} from './shared/disconnect-bluetooth-dialog/disconnect-bluetooth-dialog';
@@ -27,7 +27,7 @@ import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate
       MatSidenavModule,
       MatListModule,
       AsyncPipe,
-      BlocklyComponent
+      EditorComponent
     ]
 })
 export class AppComponent {
