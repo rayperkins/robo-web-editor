@@ -75,7 +75,10 @@ void loop1() {
 
   codeInterpreter.loop();
 
-  if (command == "forward") {
+  if(codeInterpreter.isEnabled() && !codeInterpreter.completed()) {
+
+  }
+  else if (command == "forward") {
     Forward();
   }
   else if (command == "backward") {

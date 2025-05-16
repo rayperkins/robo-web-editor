@@ -8,6 +8,8 @@
 // motion
 #define CMD_backward "backward"
 #define CMD_forward "forward"
+#define CMD_turnleft "turnleft"
+#define CMD_turnright "turnright"
 // gestures
 #define CMD_confused "confused"
 #define CMD_victory "victory"
@@ -35,6 +37,10 @@ public:
       }
     }
 
+    bool isEnabled() {
+      return _enabled;
+    }
+
     void start() {
       reset();
       _enabled = true;
@@ -58,14 +64,14 @@ public:
       }
       else if (ISOPCODE(CMD_stop, instruction, length)) {
         _ottobot->home();
-          handled = true;
+        handled = true;
       }
 
       // motion
       else if (ISOPCODE(CMD_backward, instruction, length)) {
         if(HASARG(CMD_backward, instruction, length)) {
           int arg = GETARG(CMD_backward, instruction, length);
-          _waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
+          //_waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
           _ottobot->walk(arg, _speed, BACKWARD);
           handled = true;
         }
@@ -73,8 +79,22 @@ public:
       else if (ISOPCODE(CMD_forward, instruction, length)) {
         if(HASARG(CMD_forward, instruction, length)) {
           int arg = GETARG(CMD_forward, instruction, length);
-          _waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
+          //_waitUntil = millis() + (arg < 0 ? 0 : arg * 2000); // wait until walking done
           _ottobot->walk(arg, _speed, FORWARD);
+          handled = true;
+        }
+      }
+      else if (ISOPCODE(CMD_turnleft, instruction, length)) {
+        if(HASARG(CMD_turnleft, instruction, length)) {
+          int arg = GETARG(CMD_turnleft, instruction, length);
+          _ottobot->turn(arg, _speed, LEFT);
+          handled = true;
+        }
+      }
+      else if (ISOPCODE(CMD_turnright, instruction, length)) {
+        if(HASARG(CMD_turnright, instruction, length)) {
+          int arg = GETARG(CMD_turnright, instruction, length);
+          _ottobot->turn(arg, _speed, RIGHT);
           handled = true;
         }
       }

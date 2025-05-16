@@ -12,10 +12,15 @@ export class EditorConfigToolbox {
                     },{
                         kind: 'block',
                         type: 'action_backward'
-                    },
-                    {
+                    },{
                         kind: 'block',
                         type: 'action_forward'
+                    },{
+                        kind: 'block',
+                        type: 'action_turnleft'
+                    },{
+                        kind: 'block',
+                        type: 'action_turnright'
                     },{
                         kind: 'block',
                         type: 'action_stop'

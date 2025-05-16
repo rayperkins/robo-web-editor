@@ -1,14 +1,12 @@
 import * as Blockly from 'blockly';
 import { Names, Variables, } from 'blockly';
-import { Opcode } from './Opcode';
+import { Opcode } from './opcode';
 
 enum Order {
   ATOMIC = 0, 
 }
 
 export class CodeGenerator extends Blockly.Generator {
-
-    
     variableCount: number = 0;
     variables: Blockly.VariableModel[];
 
@@ -29,17 +27,6 @@ export class CodeGenerator extends Blockly.Generator {
         }
 
         this.variables = Variables.allUsedVarModels(workspace);
-
-        // this.nameDB_.setVariableMap(workspace.getVariableMap());
-        // const variables = Variables.allUsedVarModels(workspace);
-        // for (let i = 0; i < variables.length; i++) {
-        //     this.nameDB_.getName(variables[i].getId(), NameType.VARIABLE);
-        //     this.nameDB_.
-        // }
-        
-        // this.nameDB_.populateVariables(workspace);
-
-        // this.variableCount = 0;
     }
 
     // blockToCode(block: Block | null, opt_thisOnly?: boolean): string | [string, number];
@@ -47,25 +34,6 @@ export class CodeGenerator extends Blockly.Generator {
         var result = super.blockToCode(block, thisOnly);
         return result;
     }
-
-    // workspaceToCode(workspace?: Blockly.Workspace): string {
-    //     const result = super.workspaceToCode(workspace);
-    //     let lines = result.split("\n");
-    //     let output = '';
-    //     let count = 0;
-
-    //     for(let i = 0; i < lines.length; i++) {
-    //         const line = lines[i];
-    //         if(line.length > 0) {
-    //             // adjust index?
-    //             output += `set${count} ${line}\n`
-    //             count ++;
-    //         }
-    //     }
-
-    //     return output;
-    // }
-
     workspaceToSetCommands(workspace?: Blockly.Workspace): string[] {
         const result = super.workspaceToCode(workspace);
         let lines = result.split("\n");
@@ -112,8 +80,10 @@ export class CodeGenerator extends Blockly.Generator {
         this.forBlock['action_stop'] = this.forBlock_action_stop
         this.forBlock['action_backward'] = this.forBlock_action_backward;
         this.forBlock['action_forward'] = this.forBlock_action_forward;
+        this.forBlock['action_turnleft'] = this.forBlock_action_turnleft;
+        this.forBlock['action_turnright'] = this.forBlock_action_turnright;
         // Logic 
-        this.forBlock['controls_repeat_ext'] = this.forBlock_logic_controls_repeat_ext
+        this.forBlock['controls_repeat_ext'] = this.forBlock_logic_controls_repeat_ext;
     }
 
     // Operations
@@ -141,6 +111,16 @@ export class CodeGenerator extends Blockly.Generator {
     forBlock_action_forward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const steps = block.getFieldValue('STEPS');
         return generator.formatInstruction(`forward ${steps}`);
+    }
+
+    forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const steps = block.getFieldValue('STEPS');
+        return generator.formatInstruction(`turnleft ${steps}`);
+    }
+
+    forBlock_action_turnright(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const steps = block.getFieldValue('STEPS');
+        return generator.formatInstruction(`turnright ${steps}`);
     }
 
     forBlock_logic_controls_repeat_ext(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
