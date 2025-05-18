@@ -83,7 +83,7 @@ mul #variableIndex
 07 add 1    // increment by 1
 08 stor #0  // store back into variable 0
 09 jmp 02   // jump to the start of the loop evaluation
-10 ::123    // end of loop
+10 blahblah // end of loop block
 
 ```
 
@@ -103,5 +103,6 @@ stop
 
 - arduino, send data to computer, such as current state (idle/running) and sensor data. eg: computer sends `state` then device replies with `state=01,d100`
 - arduino, expand otto command set
-- editor, code generator and basic blocks for motion
+- arduino, rewrite without ottolib and without blocking on motion etc.
+- arduino, if block
 - editor, handle disconnects, maybe show toast on connect/disconnect

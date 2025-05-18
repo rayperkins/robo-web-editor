@@ -1,12 +1,14 @@
 import { Observable, Subject, Subscriber } from "rxjs";
 import { Logger } from "../logger";
 
-export class OttoDevice {
+export class RobotDevice {
 
     public static UartServiceUuid: BluetoothServiceUUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
     private readonly _bleDevice: BluetoothDevice;
     private _gattServer?: BluetoothRemoteGATTServer;
     private _gattCharacteristic?: BluetoothRemoteGATTCharacteristic;
+
+    public state?: RobotDevice.State;
 
     constructor(bleDevice: BluetoothDevice) {
         this._bleDevice = bleDevice;
@@ -23,7 +25,7 @@ export class OttoDevice {
                     
                     this._gattServer = gattServer;
 
-                    const service = await gattServer.getPrimaryService(OttoDevice.UartServiceUuid);
+                    const service = await gattServer.getPrimaryService(RobotDevice.UartServiceUuid);
                     Logger.log('got primary service for' , this._bleDevice, ' service ', service);
 
                     const characteristic = await service.getCharacteristics();
@@ -73,6 +75,53 @@ export class OttoDevice {
 
             // trigger  first command to send
             this.sendCommandInternal(observer, commands, 0);
+        }).subscribe({
+            next: value => subject.next(value),
+            error: err => subject.error(err),
+            complete: () => subject.complete()
+        });
+
+        return subject;
+    }
+
+    public updateState() : Observable<RobotDevice.State> {
+        const subject = new Subject<RobotDevice.State>();
+        const observable = new Observable<RobotDevice.State>(observer => {
+            // check is connected
+            if(this._gattServer?.connected !== true || !this._gattCharacteristic) {
+                observer.error("not connected");
+                observer.complete();
+                return;
+            }
+
+            this._gattCharacteristic
+                .readValue()
+                .then((dataView) => {
+                    //dataView.
+                    const version = dataView.getUint8(0);
+                    const flags = dataView.getUint8(1);
+
+                    const state: RobotDevice.State = {
+                        version: version,
+                        programRunning: (flags & 0x01) > 0,
+                        // calibration
+                        trimLeftLeg: dataView.getInt8(4),
+                        trimRightLeg: dataView.getInt8(5),
+                        trimLeftFoot: dataView.getInt8(6),
+                        trimRightFoot: dataView.getInt8(7),
+                        // sensors
+                        sensorDistance: ((dataView.getUint8(9) << 8) + (dataView.getUint8(8) << 0))
+                    };
+
+                    this.state = state;
+
+                    observer.next(state);
+                    observer.complete();
+                })
+                .catch(error => {
+                    observer.error(error);
+                    observer.complete();
+                });
         }).subscribe({
             next: value => subject.next(value),
             error: err => subject.error(err),
@@ -140,5 +189,19 @@ export class OttoDevice {
             this._gattServer = undefined;
         }
     }
-    
+}
+
+
+export namespace RobotDevice
+{
+    export interface State {
+        version: number;
+        programRunning: boolean;
+        trimLeftLeg: number;
+        trimRightLeg: number;
+        trimLeftFoot: number;
+        trimRightFoot: number;
+
+        sensorDistance: number;
+    }
 }

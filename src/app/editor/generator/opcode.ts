@@ -51,15 +51,31 @@ export class Opcode {
         return `add ${arg}`;
     }
 
+    static add_variable(index: number) : string {
+        return `add #${index}`;
+    }
+
     static sub(arg: number) : string {
         return `sub ${arg}`;
+    }
+
+    static sub_variable(index: number) : string {
+        return `sub #${index}`;
     }
 
     static div(arg: number) : string {
         return `div ${arg}`;
     }
 
+    static div_variable(index: number) : string {
+        return `div #${index}`;
+    }
+
     static mul(arg: number) : string {
         return `mul ${arg}`;
+    }
+
+    static mul_variable(index: number) : string {
+        return `mul #${index}`;
     }
 }

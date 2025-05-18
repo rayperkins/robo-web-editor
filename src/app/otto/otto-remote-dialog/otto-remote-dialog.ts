@@ -9,7 +9,7 @@ import {
   MatDialogRef,
   MatDialogTitle,
 } from '@angular/material/dialog';
-import { OttoDevice } from '../otto.device';
+import { RobotDevice } from '../robot.device';
 
 @Component({
   selector: 'app-otto-remote-dialog',
@@ -24,7 +24,7 @@ export class OttoRemoteDialog {
 
   constructor(
     private dialogRef: MatDialogRef<OttoRemoteDialog>,
-    @Inject(MAT_DIALOG_DATA) private ottoDevice: OttoDevice
+    @Inject(MAT_DIALOG_DATA) private ottoDevice: RobotDevice
   ){
 
   }

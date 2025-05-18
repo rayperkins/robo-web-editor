@@ -6,7 +6,7 @@ import {Component, input, OnInit} from '@angular/core';
 
 import * as Blockly from 'blockly';
 import {BlocklyOptions} from 'blockly';
-import { OttoDevice } from '../otto/otto.device';
+import { RobotDevice } from '../otto/robot.device';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { EditorConfigBlocks } from './config/config.blocks';
@@ -26,7 +26,7 @@ import { CodeGenerator } from './generator/generator';
 export class EditorComponent implements OnInit {
 
   // connected otto device (optional)
-  connectedDevice = input<OttoDevice|null>(null); 
+  connectedDevice = input<RobotDevice | null>(null); 
   codeGenerator: CodeGenerator = new CodeGenerator();
   codeWorkspace?: Blockly.Workspace;
 
@@ -68,6 +68,8 @@ export class EditorComponent implements OnInit {
       },
       toolbox: EditorConfigToolbox.definitions,
     } as BlocklyOptions);
+
+    this.codeGenerator.setWorkspaceDefaults(this.codeWorkspace);
   }
 
   testCodeClicked() {
@@ -89,7 +91,7 @@ export class EditorComponent implements OnInit {
       // ];
 
       const commands = ['clear', ...this.codeGenerator.workspaceToSetCommands(this.codeWorkspace), 'start'];
-      //const commands = ['clear', ...this.codeGenerator.workspaceToSetCommands(this.codeWorkspace)];
+      //const commands = ['set0 victory', 'start'];
       console.log(commands);
       device.sendCommands(commands);
     }

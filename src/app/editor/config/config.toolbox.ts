@@ -24,6 +24,9 @@ export class EditorConfigToolbox {
                     },{
                         kind: 'block',
                         type: 'action_stop'
+                    },{
+                        kind: 'block',
+                        type: 'action_victory'
                     }
                 ]
             }, {
@@ -31,6 +34,21 @@ export class EditorConfigToolbox {
                 "name": "Logic",
                 "categorystyle": "logic_category",
                 "contents": [{
+                        kind: 'block',
+                        type: 'math_number',
+                    },{
+                        kind: 'block',
+                        type: 'variables_get',
+                    },{
+                        kind: 'block',
+                        type: 'variables_set',
+                    },{
+                        kind: 'block',
+                        type: 'variables_set',
+                    },{
+                        kind: 'block',
+                        type: 'controls_restart',
+                    },{
                         kind: 'block',
                         type: 'controls_repeat_ext',
                         inputs: {
@@ -43,11 +61,28 @@ export class EditorConfigToolbox {
                                 },
                             },
                         },
+                    },{
+                        kind: 'block',
+                        type: 'controls_if_basic',
+                        inputs: {
+                            A: {
+                                shadow: {
+                                    type: 'math_number',
+                                    fields: {
+                                        NUM: 1,
+                                    },
+                                },
+                            },
+                            B: {
+                                shadow: {
+                                    type: 'math_number',
+                                    fields: {
+                                        NUM: 1,
+                                    },
+                                },
+                            },
+                        },
                     },
-                    // {
-                    //     kind: 'block',
-                    //     type: 'controls_ifelse',
-                    // },
                 ]
             }
         ],

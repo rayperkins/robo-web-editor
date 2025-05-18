@@ -13,9 +13,9 @@
 #define INSTRUCTION_HASARG(interpreter, opcode, instruction, length) (interpreter.hasArg(opcode, sizeof(opcode), instruction, length) == true)
 #define INSTRUCTION_GETARG(interpreter, opcode, instruction, length) (interpreter.getArg(opcode, sizeof(opcode), instruction, length))
 
-#define ISOPCODE(opcode, instruction, length) (isOpcode(opcode, sizeof(opcode), instruction, length) == true)
-#define HASARG(opcode, instruction, length) (hasArg(opcode, sizeof(opcode), instruction, length) == true)
-#define GETARG(opcode, instruction, length) (getArg(opcode, sizeof(opcode), instruction, length))
+#define ISOPCODE(opcode, instruction, length) (isOpcode(opcode, (sizeof(opcode) - 1), instruction, length) == true)
+#define HASARG(opcode, instruction, length) (hasArg(opcode, (sizeof(opcode) - 1), instruction, length) == true)
+#define GETARG(opcode, instruction, length) (getArg(opcode, (sizeof(opcode) - 1), instruction, length))
 
 #define OPCODE_exit "exit"
 #define OPCODE_use "use"
@@ -98,7 +98,7 @@ public:
   }
 
   bool isOpcode(const char* opcode, int opcodeLength, const char* instruction, int instructionLength) {
-    if(instructionLength < opcodeLength) {
+    if(instructionLength + 1 < opcodeLength) {
       return false;
     }
 

@@ -34,6 +34,8 @@ class OttoSensors
 public:
   bool mpu6050IsAvailable = false;
   sensors_event_t mpu6050_a, mpu6050_g, mpu6050_temp;
+  long nextDistanceUpdate = 0;
+  long nextMpuUpdate = 0;
   long distance;
 
   void setup() {
@@ -76,8 +78,9 @@ public:
   {
     uint32_t msNow = millis();
     // update the MPU readings every 5ms (200Hz)
-    if((msNow % MPU6050_UPDATE_INTERVAL) == 0)
+    if(nextMpuUpdate < msNow)
     {
+      nextMpuUpdate = msNow + MPU6050_UPDATE_INTERVAL;
       if(updateMP6050Readings() 
         && _isCalibrating
         && _mpu6050CalibrationCount < MPU6050_CALIBRATION_SAMPLE_COUNT)
@@ -92,9 +95,10 @@ public:
       }
     }
 
-    // update distance every 50ms (20Hz)
-    if((msNow % DISTANCE_UPDATE_INTERVAL) == 0)
+    // update distance every 50ms (20Hz)    
+    if(nextDistanceUpdate < msNow)
     {
+      nextDistanceUpdate = msNow + DISTANCE_UPDATE_INTERVAL;
       update_distance();
       //PrintDebug("distance=%d", distance);
     }

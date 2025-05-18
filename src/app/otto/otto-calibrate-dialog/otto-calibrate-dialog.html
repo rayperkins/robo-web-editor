@@ -1,5 +1,8 @@
 <h2 mat-dialog-title>Otto Calibrate</h2>
 <mat-dialog-content class="fx-column fx-align-center">
+  <div>
+    Distance: {{sensorDistance()}} <button class="ml-1" mat-button (click)="refresh()">Refresh</button>
+  </div>
   <svg width="270" height="300" class="fx-flex-0-0">
     <!-- Head and body -->
     <rect x="50" y="0" rx="5" ry="5" width="170" height="80" stroke="teal" stroke-width="2" fill="#33db00" />
@@ -21,8 +24,8 @@
         <div>
           <label id="example-name-label" class="example-name-label">Leg</label>
           <mat-slider showTickMarks discrete class="calibrate-slider"
-              [max]="180"
-              [min]="0"
+              [max]="90"
+              [min]="-90"
               [step]="1"
               [displayWith]="formatSliderLabel">
               <input matSliderThumb [formControl]="rightLegControl" (valueChange)="updateCalibration()">
@@ -31,8 +34,8 @@
         <div>
           <label id="example-name-label" class="example-name-label">Foot</label>
           <mat-slider showTickMarks discrete class="calibrate-slider"
-              [max]="180"
-              [min]="0"
+              [max]="90"
+              [min]="-90"
               [step]="1"
               [displayWith]="formatSliderLabel">
               <input matSliderThumb [formControl]="rightFootControl" (valueChange)="updateCalibration()">
@@ -46,8 +49,8 @@
         <div>
           <label id="example-name-label" class="example-name-label">Leg</label>
           <mat-slider showTickMarks discrete class="calibrate-slider"
-              [max]="180"
-              [min]="0"
+              [max]="90"
+              [min]="-90"
               [step]="1"
               [displayWith]="formatSliderLabel">
               <input matSliderThumb [formControl]="leftLegControl" (valueChange)="updateCalibration()">
@@ -56,8 +59,8 @@
         <div>
           <label id="example-name-label" class="example-name-label">Foot</label>
           <mat-slider showTickMarks discrete class="calibrate-slider"
-              [max]="180"
-              [min]="0"
+              [max]="90"
+              [min]="-90"
               [step]="1"
               [displayWith]="formatSliderLabel">
               <input matSliderThumb [formControl]="leftFootControl" (valueChange)="updateCalibration()">

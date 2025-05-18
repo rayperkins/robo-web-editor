@@ -21,12 +21,16 @@ public:
 
     }
 
-    void setup(Otto* ottobot) {
+    void setup(Otto* ottobot, OttoSensors* sensors) {
       _ottobot = ottobot;
+      _sensors = sensors;
     }
 
     void loop() {
       unsigned long now = millis();
+
+      // update variables
+      setVariable(0, _sensors->distance);
 
       if(_enabled 
         && _waitUntil < now) {
@@ -114,6 +118,7 @@ public:
 
 private:
   Otto* _ottobot;
+  OttoSensors* _sensors;
   bool _enabled = false;
   int _speed = 1000;
   unsigned long _waitUntil = 0;

@@ -10,6 +10,12 @@
             "problemMatcher": [],  
         },
         {
+			"label": "Start devtunnel",
+			"type": "shell",
+			"command": "devtunnel user login;devtunnel host -p 3000 --allow-anonymous --protocol https",
+			"problemMatcher": []
+		},
+        {
             "type": "shell",
             "label": "Build Arduino Tests",
             "command": "cmake -DCMAKE_BUILD_TYPE=Debug ./ & make",

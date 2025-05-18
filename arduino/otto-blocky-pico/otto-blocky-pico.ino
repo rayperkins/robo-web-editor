@@ -54,6 +54,24 @@ const uint8_t adv_data[] = {
   0x11, 0x15, 0x00, 0x00, 0xff, 0xe0, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb
 };
 
+typedef enum  {
+    PROGRAM_RUNNING = 1,
+} botStateFlag_t;
+
+typedef struct botreaddata {
+  uint8_t version;
+  botStateFlag_t state;
+  uint8_t reserved0;
+  uint8_t reserved1;
+  // calibration, 0 - 255
+  int8_t trimLeftLeg;
+  int8_t trimRightLeg;
+  int8_t trimLeftFoot;
+  int8_t trimRightFoot;
+  // sensors
+  uint16_t sensor_distance;
+} botreaddata_t;
+
 bool calibration = false;
 bool setupDone = false;
   
@@ -64,15 +82,16 @@ OttoCodeInterpreter codeInterpreter;
 // SENSORS IN CORE 1
 void setup1() {
   sensors.setup();
+  codeInterpreter.setup(&Ottobot, &sensors);
 }
 
 void loop1() {
-  sensors.loop();
 
   if(!setupDone) {
     return;
   }
 
+  sensors.loop();
   codeInterpreter.loop();
 
   if(codeInterpreter.isEnabled() && !codeInterpreter.completed()) {
@@ -101,12 +120,9 @@ void loop1() {
 // MAIN APP IN CORE 0
 void setup() {
   //rp2040.idleOtherCore();
-  OttoConfig.setup();
-  codeInterpreter.setup(&Ottobot);
+  OttoConfig.setup();  
 
   DEBUGSERIAL.begin(115200);
-
-  
 
   Ottobot.init(LEFTLEG, RIGHTLEG, LEFTFOOT, RIGHTFOOT, false, BUZZER);
   if(OttoConfig.isValid) {
@@ -130,21 +146,15 @@ void setup() {
 
   // BTstack.addGATTCharacteristicDynamic(new UUID("6E400002-B5A3-F393-E0A9-E50E24DCCA9E"), ATT_PROPERTY_WRITE, 0); //RX
   // BTstack.addGATTCharacteristicDynamic(new UUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E"), ATT_PROPERTY_NOTIFY, 0); //TX
-  BTstack.addGATTCharacteristicDynamic(new UUID("0000ffe1-0000-1000-8000-00805f9b34fb"), ATT_PROPERTY_WRITE | ATT_PROPERTY_NOTIFY, 0); //RX
+  
+  // commands
+  BTstack.addGATTCharacteristicDynamic(new UUID("0000ffe1-0000-1000-8000-00805f9b34fb"), ATT_PROPERTY_WRITE | ATT_PROPERTY_READ, 0); //RX
 
   // startup Bluetooth and activate advertisements
 
   BTstack.setAdvData(sizeof(adv_data), adv_data);
   BTstack.startAdvertising();
-  
 
-
-  // SETINSTRUCTION(codeInterpreter, 0, "forward 1");
-  // SETINSTRUCTION(codeInterpreter, 1, "wait 5000");
-  // SETINSTRUCTION(codeInterpreter, 2, "stop");
-  // SETINSTRUCTION(codeInterpreter, 3, "victory");
-  // SETINSTRUCTION(codeInterpreter, 4, "jmp 0");
-  // codeInterpreter.start();
   v = 0;
   setupDone = true;
 }
@@ -173,11 +183,23 @@ void deviceDisconnectedCallback(BLEDevice * device) {
 uint16_t gattReadCallback(uint16_t value_handle, uint8_t * buffer, uint16_t buffer_size) {
   (void) value_handle;
   (void) buffer_size;
+
   if (buffer) {
-    PrintDebug("gattReadCallback, size: %d", buffer_size);
-    buffer[0] = 0;
+    botreaddata_t readData;
+    readData.version = 1;
+    readData.state = (botStateFlag_t)((codeInterpreter.isEnabled() && !codeInterpreter.completed()) ? PROGRAM_RUNNING : 0);
+    // calibration
+    readData.trimLeftLeg = OttoConfig.current.trimLeftLeg;
+    readData.trimRightLeg = OttoConfig.current.trimRightLeg;
+    readData.trimLeftFoot = OttoConfig.current.trimLeftFoot;
+    readData.trimRightFoot = OttoConfig.current.trimRightFoot;
+    // sensors
+    readData.sensor_distance = sensors.distance;
+
+    memcpy(buffer, (void*)&readData, sizeof(botreaddata_t));
   }
-  return 1;
+
+  return sizeof(botreaddata_t);
 }
 
 int gattWriteCallback(uint16_t value_handle, uint8_t *buffer, uint16_t size) {

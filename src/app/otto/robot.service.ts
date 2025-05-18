@@ -2,12 +2,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Logger } from '../logger';
-import { OttoDevice } from './otto.device';
+import { RobotDevice } from './robot.device';
 
 @Injectable({
     providedIn: 'root',
 })
-export class OttoService {
+export class RobotService {
     private ble: Bluetooth;
 
     constructor() {
@@ -17,20 +17,20 @@ export class OttoService {
         }
     }
 
-    public discover(): Observable<OttoDevice> {
-        const observable = new Observable<OttoDevice>(observer => {
+    public discover(): Observable<RobotDevice> {
+        const observable = new Observable<RobotDevice>(observer => {
             
             const options: RequestDeviceOptions = {
                 //filters: [ {services: [ottoUartServiceUuid]}],
                 filters: [ {namePrefix: 'OTTO'}],
                 //acceptAllDevices: false,
-                optionalServices: [OttoDevice.UartServiceUuid]
+                optionalServices: [RobotDevice.UartServiceUuid]
             };
 
             this.ble.requestDevice(options).then(device => {
                 Logger.log('discovered device', device);
                 
-                observer.next(new OttoDevice(device));
+                observer.next(new RobotDevice(device));
                 observer.complete();
             }).catch(error => {
                 observer.error(error);
@@ -46,4 +46,3 @@ export class OttoService {
         return this.ble.requestDevice(options);
     }
 }
-

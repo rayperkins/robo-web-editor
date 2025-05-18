@@ -10,8 +10,8 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { EditorComponent } from './editor/editor.component';
-import { OttoService } from './otto/otto.service';
-import { OttoDevice } from './otto/otto.device';
+import { RobotService } from './otto/robot.service';
+import { RobotDevice } from './otto/robot.device';
 import { DisconnectBluetoothDialog} from './shared/disconnect-bluetooth-dialog/disconnect-bluetooth-dialog';
 import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
 import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate-dialog';
@@ -26,7 +26,6 @@ import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate
       MatIconModule,
       MatSidenavModule,
       MatListModule,
-      AsyncPipe,
       EditorComponent
     ]
 })
@@ -36,11 +35,11 @@ export class AppComponent {
     private breakpointObserver = inject(BreakpointObserver);
         
     public isConnecting$ = new BehaviorSubject<boolean>(false);
-    public connectedDevice?: OttoDevice;
-    
+    public connectedDevice?: RobotDevice;
+
     constructor(
         private dialog: MatDialog,
-        private ottoService: OttoService,
+        private robotService: RobotService,
     ) {
 
     }
@@ -65,7 +64,7 @@ export class AppComponent {
         }
         else {
             this.isConnecting$.next(true);
-            this.ottoService.discover().subscribe({next: (device) =>
+            this.robotService.discover().subscribe({next: (device) =>
             {
                 device.connect().subscribe({next: (isConnected) => {
                     this.isConnecting$.next(false);
@@ -73,9 +72,11 @@ export class AppComponent {
                         console.log('connected!!!');
 
                         this.connectedDevice = device;
-                        // this.connectedDevice.sendCommand('victory').subscribe({
-                        //     next: () => console.log('command sent!')
-                        // });
+
+                        this.connectedDevice.updateState().subscribe({
+
+                            next: (value) => console.log("state updated!!!", value)
+                        });
                     }
                 }, error: () => this.isConnecting$.next(false)});
 
