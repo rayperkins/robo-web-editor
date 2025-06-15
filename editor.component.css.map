@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/editor/editor.component.scss"],
+  "sourcesContent": [":host {\n  display: flex !important;\n  flex-direction: column;\n  position: relative;\n}\n\n#blocklyDiv {\n  flex: 1 0 auto;\n  min-width: 1px;\n}\n\n#editorButtons {\n  position: absolute;\n  z-index: 1;\n  right: 0px;\n  margin-top: 15px;\n  margin-right: 20px;\n}\n\n"],
+  "mappings": ";AAAA;AACE,WAAA;AACA,kBAAA;AACA,YAAA;;AAGF,CAAA;AACE,QAAA,EAAA,EAAA;AACA,aAAA;;AAGF,CAAA;AACE,YAAA;AACA,WAAA;AACA,SAAA;AACA,cAAA;AACA,gBAAA;;",
+  "names": []
+}

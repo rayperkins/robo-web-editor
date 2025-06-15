@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/otto/otto-calibrate-dialog/otto-calibrate-dialog.scss"],
+  "sourcesContent": ["\n.control-button-container {\n    display: grid;\n    grid-template-columns: 50px 50px 50px;\n    grid-template-rows: 50px 50px 50px;\n    margin-right: 15px;\n}\n\n.control-button-container button {\n    margin: 5px;\n}\n\n\n.action-button-container button {\n    margin: 2px;\n}\n\n.calibrate-slider {\n    width: 160px;\n}\n\n"],
+  "mappings": ";AACA,CAAA;AACI,WAAA;AACA,yBAAA,KAAA,KAAA;AACA,sBAAA,KAAA,KAAA;AACA,gBAAA;;AAGJ,CAPA,yBAOA;AACI,UAAA;;AAIJ,CAAA,wBAAA;AACI,UAAA;;AAGJ,CAAA;AACI,SAAA;;",
+  "names": []
+}

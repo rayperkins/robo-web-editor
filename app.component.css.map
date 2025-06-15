@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/app.component.scss"],
+  "sourcesContent": ["@use '@angular/material' as mat;\n\n:host {\n  display: flex !important;\n  height: 100%;\n  width: 100%;\n  flex-direction: column;\n  justify-content: flex-start;\n}\n\n.logo {\n  height: 90%;\n}\n\n.mat-toolbar.mat-primary {\n  position: sticky;\n  top: 0;\n  z-index: 1;\n}\n\n.icon-connected {\n  color: #33db00;\n}\n  "],
+  "mappings": ";AAEA;AACE,WAAA;AACA,UAAA;AACA,SAAA;AACA,kBAAA;AACA,mBAAA;;AAGF,CAAA;AACE,UAAA;;AAGF,CAAA,WAAA,CAAA;AACE,YAAA;AACA,OAAA;AACA,WAAA;;AAGF,CAAA;AACE,SAAA;;",
+  "names": []
+}

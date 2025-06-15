@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/otto/otto-remote-dialog/otto-remote-dialog.css"],
+  "sourcesContent": ["\n.control-button-container {\n    display: grid;\n    grid-template-columns: 50px 50px 50px;\n    grid-template-rows: 50px 50px 50px;\n    margin-right: 15px;\n}\n\n.control-button-container button {\n    margin: 5px;\n}\n\n\n.action-button-container button {\n    margin: 2px;\n}"],
+  "mappings": ";AACA,CAAC;AACG,WAAS;AACT,yBAAuB,KAAK,KAAK;AACjC,sBAAoB,KAAK,KAAK;AAC9B,gBAAc;AAClB;AAEA,CAPC,yBAOyB;AACtB,UAAQ;AACZ;AAGA,CAAC,wBAAwB;AACrB,UAAQ;AACZ;",
+  "names": []
+}
