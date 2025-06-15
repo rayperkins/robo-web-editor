@@ -8,7 +8,8 @@
     "start": "ng serve --host 0.0.0.0 --port 3000 --disable-host-check",
     "build": "ng build",
     "test": "ng test",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "deploy": "ng build --base-href=/robo-web-editor/ && npx angular-cli-ghpages --dir=dist/robo-web-editor"
   },
   "private": true,
   "dependencies": {
