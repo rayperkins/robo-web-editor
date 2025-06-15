@@ -12,7 +12,7 @@
         {
 			"label": "Start devtunnel",
 			"type": "shell",
-			"command": "devtunnel user login;devtunnel host -p 3000 --allow-anonymous --protocol https",
+			"command": "devtunnel user login;devtunnel host -p 3000 --allow-anonymous",
 			"problemMatcher": []
 		},
         {
