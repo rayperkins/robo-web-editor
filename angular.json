@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "blockly-angular-sample": {
+    "robo-web-editor": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -14,7 +14,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": {
-              "base": "dist/blockly-angular-sample"
+              "base": "dist/robo-web-editor"
             },
             "index": "src/index.html",
             "polyfills": [
@@ -72,28 +72,28 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "blockly-angular-sample:build"
+            "buildTarget": "robo-web-editor:build"
           },
           "configurations": {
             "production": {
-              "buildTarget": "blockly-angular-sample:build:production"
+              "buildTarget": "robo-web-editor:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "blockly-angular-sample:build"
+            "buildTarget": "robo-web-editor:build"
           }
         },
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",
           "options": {
-            "devServerTarget": "blockly-angular-sample:serve"
+            "devServerTarget": "robo-web-editor:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "blockly-angular-sample:serve:production"
+              "devServerTarget": "robo-web-editor:serve:production"
             }
           }
         }
