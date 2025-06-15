@@ -1,5 +1,3 @@
-import { BlockDefinition } from "blockly/core/blocks";
-
 export class EditorConfigBlocks {
     static definitions: any[] = [
         // Operations
