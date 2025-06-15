@@ -1,8 +1,9 @@
 [Home](../README.md)
 
-# Otto Web Editor 
+# Robo Web Editor 
 
-This sample shows how to load Blockly in an [Angular](https://angular.io/) project.
+This project is a web-based Blockly editor used to control and program hobby robots.
+Currently this targets the open source [OttoDiy robot](https://www.ottodiy.com/).
 
 [![Built on Blockly](https://tinyurl.com/built-on-blockly)](https://github.com/google/blockly)
 
@@ -28,7 +29,7 @@ The application should then be served from [http://localhost:3000/](http://local
 The sketch has been written with an RPI Pico in mind. However, it's pretty modular so can be chopped and changed to suit any Bluetooth enabled board.
 Open the sketch under the arduino folder in the Arduino IDE, set the target the a RPI Pico W compatible board and upload.
 
-## Otto and blocky
+## Arudino and blocky
 
 Each instruction line is allocated 20 bytes (BLE packet size).
 Supports only 16bit integers: -32,768 to +32,767
