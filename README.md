@@ -32,7 +32,7 @@ The editor's code generator (see [generator.ts](/home/rayperkins/repos/personal/
 
 Each instruction line is allocated 20 bytes (BLE packet size).
 Supports only 16bit integers: -32,768 to +32,767
-Has max of 10000 lines.
+Has max of 512 lines (firmware `INSTRUCTION_LIST_SIZE`).
 a '#' in front of the constant indicates a variable address
 
 The BLE packet to set a particular instruction line is:
@@ -99,6 +99,3 @@ speed 5
 stop
 ```
 
-## Todo list
-
-- editor, handle disconnects, maybe show toast on connect/disconnect

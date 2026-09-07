@@ -18,6 +18,15 @@ When changing the instruction/opcode format, keep [README.md](/home/rayperkins/r
 and [generator.ts](/home/rayperkins/repos/personal/robo-web-editor/src/app/editor/generator/generator.ts) consistent with each other, and
 call out in your summary that the paired firmware repo will also need updating.
 
+## Development
+
+The `TODO.md` file is used to track development tasks, status and future tasks.
+Use it actively when planning and implementing work: identify the relevant todo
+before making changes, keep its status and wording current as the work
+progresses, and move completed work to the Completed section while recording
+follow-up work under Next. Keep the list aligned with the repository's actual
+implementation and validation status.
+
 ### Repo layout
 
 - [src/app/editor/](/home/rayperkins/repos/personal/robo-web-editor/src/app/editor) — Blockly workspace host component, block/toolbox config (`config.blocks.ts`, `config.toolbox.ts`), and the `generator/` folder that compiles the workspace into opcode strings.

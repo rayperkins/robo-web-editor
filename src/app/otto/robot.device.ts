@@ -97,25 +97,36 @@ export class RobotDevice {
             this._gattCharacteristic
                 .readValue()
                 .then((dataView) => {
+                    if (dataView.byteLength < 1) {
+                        observer.error(`state payload too short: expected at least 1 byte, got ${dataView.byteLength}`);
+                        observer.complete();
+                        return;
+                    }
+
                     //dataView.
                     const version = dataView.getUint8(0);
-                    const flags = dataView.getUint8(1);
 
-                    const state: RobotDevice.State = {
-                        version: version,
-                        programRunning: (flags & 0x01) > 0,
-                        // calibration
-                        trimLeftLeg: dataView.getInt8(4),
-                        trimRightLeg: dataView.getInt8(5),
-                        trimLeftFoot: dataView.getInt8(6),
-                        trimRightFoot: dataView.getInt8(7),
-                        // sensors
-                        sensorDistance: ((dataView.getUint8(9) << 8) + (dataView.getUint8(8) << 0))
-                    };
+                    if(version == 1 && dataView.byteLength > 1) {
+                        const flags = dataView.getUint8(1);
 
-                    this.state = state;
+                        const state: RobotDevice.State = {
+                            version: version,
+                            programRunning: (flags & 0x01) > 0,
+                            // calibration
+                            trimLeftLeg: dataView.getInt8(4),
+                            trimRightLeg: dataView.getInt8(5),
+                            trimLeftFoot: dataView.getInt8(6),
+                            trimRightFoot: dataView.getInt8(7),
+                            // sensors
+                            sensorDistance: ((dataView.getUint8(9) << 8) + (dataView.getUint8(8) << 0))
+                        };
+                    
 
-                    observer.next(state);
+                        this.state = state;
+
+                        observer.next(state);
+                    }
+
                     observer.complete();
                 })
                 .catch(error => {
