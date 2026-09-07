@@ -1,10 +1,12 @@
+import { describe, expect, it, vi } from 'vitest';
 import { RobotDevice } from './robot.device';
 import { STATE_BYTE_LENGTH } from '../editor/generator/schema/state.schema';
 
 describe('RobotDevice.updateState', () => {
     function createDevice(dataView: DataView): RobotDevice {
-        const characteristic = jasmine.createSpyObj('BluetoothRemoteGATTCharacteristic', ['readValue']);
-        characteristic.readValue.and.resolveTo(dataView);
+        const characteristic = {
+            readValue: vi.fn().mockResolvedValue(dataView),
+        };
 
         const device = new RobotDevice({} as BluetoothDevice);
         (device as any)._gattServer = { connected: true };
@@ -45,8 +47,8 @@ describe('RobotDevice.updateState', () => {
         const view = new DataView(buffer);
         const device = createDevice(view);
 
-        await expectAsync(new Promise((resolve, reject) => {
+        await expect(new Promise((resolve, reject) => {
             device.updateState().subscribe({ next: resolve, error: reject });
-        })).toBeRejected();
+        })).rejects.toBeDefined();
     });
 });

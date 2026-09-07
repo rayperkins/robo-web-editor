@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { Opcode } from './opcode';
 import { OPCODES } from './schema/opcodes.schema';
 
