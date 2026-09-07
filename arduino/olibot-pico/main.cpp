@@ -1,7 +1,7 @@
 /*  
 * Sketch to control the Olibot!
 */
-
+#include <Arduino.h>
 #include <Otto.h>
 #include <EEPROM.h>
 #include <BTstackLib.h>
