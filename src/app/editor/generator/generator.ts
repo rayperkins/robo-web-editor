@@ -160,7 +160,7 @@ export class CodeGenerator extends Blockly.Generator {
 
     forBlock_action_turn(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? 45;
-        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(100)]);
+        return generator.formatInstruction(Opcode.heading(Number(degrees)));
     }
 
     forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
