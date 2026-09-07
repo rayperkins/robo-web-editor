@@ -3,7 +3,7 @@
         {
             "type": "shell",
             "label": "Run Dev Server",
-            "command": "npm run start",
+            "command": "npm run start -- --host 0.0.0.0 --port 4200",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -12,7 +12,7 @@
         {
 			"label": "Start devtunnel",
 			"type": "shell",
-			"command": "devtunnel user login;devtunnel host -p 3000 --allow-anonymous",
+			"command": "devtunnel user login;devtunnel host -p 4200 --allow-anonymous",
 			"problemMatcher": []
 		}
     ],

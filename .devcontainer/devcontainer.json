@@ -1,26 +1,36 @@
 {
 	"name": "Robo Web Editor devcontainer",
-	"build": {
-		"dockerfile": "Dockerfile",
-		// Update 'VARIANT' to pick an Debian / Ubuntu OS version: debian-11, debian-10, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04
-		// Use Debian 11, Ubuntu 18.04 or Ubuntu 22.04 on local arm64/Apple Silicon
-		"args": { "VARIANT": "bullseye" }
-	},
-    "appPort": [3000],
-	// Configure tool-specific properties.
-	"customizations": {
-		"settings": {
-			"terminal.integrated.defaultProfile.linux": "zsh"
-		},
-		// Configure properties specific to VS Code.
-		"vscode": {
-			// Add the IDs of extensions you want installed when the container is created.
-			"extensions": [
-                "dbaeumer.vscode-eslint"
-			]
-		}
-	},
 
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "remoteUser": "node",
+
+  "forwardPorts": [
+    4200
+  ],
+
+  "portsAttributes": {
+    "4200": {
+      "label": "Angular development server",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "postCreateCommand": "npm ci",
+
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "angular.ng-template",
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "js/ts.tsdk.path": "node_modules/typescript/lib"
+      }
+    }
+  }
 }

@@ -1,9 +1,13 @@
-# [Choice] Debian / Ubuntu version (use Debian 11, Ubuntu 18.04/22.04 on local arm64/Apple Silicon): debian-11, debian-10, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04
-ARG VARIANT=bullseye
-FROM mcr.microsoft.com/vscode/devcontainers/base:${VARIANT}
+FROM mcr.microsoft.com/devcontainers/javascript-node:26-bookworm
 
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
 
-# Install node
-RUN sudo apt-get update \
- && sudo apt-get -y install --no-install-recommends nodejs npm
+# Install any native tools required by npm packages here.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+USER node
