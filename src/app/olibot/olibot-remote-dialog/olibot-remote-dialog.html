@@ -4,23 +4,23 @@
     <!-- Directional control pad -->
     <div class="control-button-container">
       <div></div>
-      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('forward 100')">
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand(commands.forward)">
         <mat-icon>arrow_upward</mat-icon>
       </button>
       <div></div>
 
-      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('turn -45')">
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand(commands.left)">
         <mat-icon>rotate_left</mat-icon>
       </button>
-      <button mat-mini-fab color="warn" (click)="sendCommand('stop')">
+      <button mat-mini-fab color="warn" (click)="sendCommand(commands.stop)">
         <mat-icon>stop</mat-icon>
       </button>
-      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('turn 45')">
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand(commands.right)">
         <mat-icon>rotate_right</mat-icon>
       </button>
 
       <div></div>
-      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('backward 100')">
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand(commands.backward)">
         <mat-icon>arrow_downward</mat-icon>
       </button>
       <div></div>
@@ -34,9 +34,9 @@
         <mat-card-title>Speed Presets</mat-card-title>
       </mat-card-header>
       <mat-card-content class="action-button-container">
-        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 30')">30%</button>
-        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 60')">60%</button>
-        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 100')">100%</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.speed30)">30%</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.speed60)">60%</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.speed100)">100%</button>
       </mat-card-content>
     </mat-card>
 
@@ -46,8 +46,7 @@
         <mat-card-title>Actions</mat-card-title>
       </mat-card-header>
       <mat-card-content class="action-button-container">
-        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('victory')">Victory</button>
-        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('stop')">Stop</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.stop)">Stop</button>
       </mat-card-content>
     </mat-card>
   </div>

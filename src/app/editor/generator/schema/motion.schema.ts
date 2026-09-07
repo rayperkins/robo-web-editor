@@ -1,33 +1,31 @@
-// Shared robot motion command types and definitions.
+// Generic robot motion command types and definitions.
 // Motion commands are handled outside the generic CodeInterpreter::step()
 // opcode table (e.g. by firmware's robot-specific motion controller /
 // instruction handler), but are part of the BLE wire format shared across robots.
 
-export type MotionArgKind = 'none' | 'steps' | 'speed' | 'distanceMm' | 'headingDeg' | 'durationMs' | 'direction';
+export type MotionArgKind = 'none' | 'steps' | 'speed' | 'distanceMm' | 'headingDeg' | 'durationMs' | 'direction' | 'int16OrVariableIndex';
 
 export interface MotionCommandDefinition {
     /** Wire mnemonic text, e.g. "forward", "turn". */
     readonly mnemonic: string;
     readonly argKind: MotionArgKind;
     readonly description?: string;
+    readonly min?: number;
+    readonly max?: number;
+    readonly defaultValue?: number;
 }
 
 /**
- * Shared motion commands understood across robot variants.
- * Both walking robots (Otto) and wheeled differential-drive robots (Olibot)
- * share this vehicle-level movement command set (e.g. forward 100mm, turn 45deg, speed 100%).
+ * Generic movement capabilities understood across supported robot variants.
+ * Robot adapters interpret these setpoints according to their own drive
+ * mechanism; the wire-level command names remain stable.
  */
-export const SHARED_MOTION_COMMANDS: readonly MotionCommandDefinition[] = [
-    { mnemonic: 'forward', argKind: 'distanceMm', description: 'Move forward specified distance in mm (e.g. forward 100)' },
-    { mnemonic: 'backward', argKind: 'distanceMm', description: 'Move backward specified distance in mm (e.g. backward 100)' },
-    { mnemonic: 'turn', argKind: 'headingDeg', description: 'Rotate relative heading in degrees (e.g. turn 45, turn -90)' },
-    { mnemonic: 'speed', argKind: 'speed', description: 'Set motion speed in percent (e.g. speed 100)' },
-    { mnemonic: 'stop', argKind: 'none', description: 'Stop motion immediately' },
-    { mnemonic: 'wait', argKind: 'durationMs', description: 'Wait duration in ms (e.g. wait 1000)' },
-    { mnemonic: 'victory', argKind: 'none', description: 'Victory gesture/dance' },
+export const ROBOT_MOTION_COMMANDS: readonly MotionCommandDefinition[] = [
+    { mnemonic: 'heading', argKind: 'int16OrVariableIndex', min: -360, max: 360, defaultValue: 0, description: 'Set the relative heading target in degrees.' },
+    { mnemonic: 'distance', argKind: 'int16OrVariableIndex', min: 0, max: 32767, defaultValue: 0, description: 'Set the travel distance target in millimetres.' },
+    { mnemonic: 'speed', argKind: 'int16OrVariableIndex', min: 0, max: 100, defaultValue: 100, description: 'Set the requested speed percentage.' },
+    { mnemonic: 'move', argKind: 'int16OrVariableIndex', min: 0, max: 100, defaultValue: 100, description: 'Submit the current heading and distance setpoints; the argument is the requested speed percentage.' },
+    { mnemonic: 'stop', argKind: 'none', description: 'Stop motion and clear pending movement setpoints.' },
+    { mnemonic: 'wait', argKind: 'int16OrVariableIndex', min: 0, max: 32767, description: 'Wait in the interpreter without issuing a movement command; duration is milliseconds.' },
 ] as const;
-
-export { SHARED_MOTION_COMMANDS as MOTION_COMMANDS };
-
-
 

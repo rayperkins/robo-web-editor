@@ -1,8 +1,11 @@
-import { SHARED_MOTION_COMMANDS } from '../motion.schema';
+import { MotionCommandDefinition, ROBOT_MOTION_COMMANDS } from '../motion.schema';
 import { StateFieldDefinition, StateFlagBit } from '../state.schema';
 import { RobotSchema } from '../robot-types';
 
-export const OTTO_MOTION_COMMANDS = SHARED_MOTION_COMMANDS;
+export const OTTO_MOTION_COMMANDS: readonly MotionCommandDefinition[] = [
+    ...ROBOT_MOTION_COMMANDS,
+    { mnemonic: 'victory', argKind: 'none', description: 'Victory gesture/dance.' },
+] as const;
 
 export const OTTO_STATE_FIELDS: readonly StateFieldDefinition[] = [
     { name: 'version', offset: 0, type: 'u8' },
@@ -30,4 +33,3 @@ export const OTTO_ROBOT_SCHEMA: RobotSchema = {
     stateFlagBits: OTTO_STATE_FLAG_BITS,
     stateByteLength: OTTO_STATE_BYTE_LENGTH,
 };
-

@@ -28,14 +28,19 @@ constexpr const char* OPCODE_SUB = "sub";
 constexpr const char* OPCODE_DIV = "div";
 constexpr const char* OPCODE_MUL = "mul";
 
-// Shared vehicle-level motion commands (handled outside CodeInterpreter::step()).
-constexpr const char* MOTION_FORWARD = "forward";
-constexpr const char* MOTION_BACKWARD = "backward";
-constexpr const char* MOTION_TURN = "turn";
-constexpr const char* MOTION_SPEED = "speed";
-constexpr const char* MOTION_STOP = "stop";
-constexpr const char* MOTION_WAIT = "wait";
-constexpr const char* MOTION_VICTORY = "victory";
+// Generic robot movement commands (ASCII, one optional signed int16 argument).
+// heading: relative degrees [-360, 360], default 0.
+// distance: millimetres [0, 32767], default 0.
+// speed: requested percent [0, 100], default 100.
+// move: submits the current heading/distance setpoints; argument is speed [0, 100].
+// stop: stops motion and clears pending setpoints.
+// wait: interpreter delay in milliseconds [0, 32767].
+constexpr const char* ROBOT_SET_HEADING = "heading";
+constexpr const char* ROBOT_SET_DISTANCE = "distance";
+constexpr const char* ROBOT_SET_SPEED = "speed";
+constexpr const char* ROBOT_MOVE = "move";
+constexpr const char* ROBOT_STOP = "stop";
+constexpr const char* ROBOT_WAIT = "wait";
 
 // Bits within State::flags / CoreState::flags.
 constexpr std::uint8_t STATE_FLAG_PROGRAMRUNNING_BIT = 0;

@@ -104,7 +104,6 @@ export class CodeGenerator extends Blockly.Generator {
         this.forBlock['action_speed'] = this.forBlock_action_speed;
         this.forBlock['action_turnleft'] = this.forBlock_action_turnleft;
         this.forBlock['action_turnright'] = this.forBlock_action_turnright;
-        this.forBlock['action_victory'] = this.forBlock_action_victory;
         // Logic 
         this.forBlock['controls_restart'] = this.forBlock_logic_controls_restart; // TODO
         this.forBlock['controls_if_basic'] = this.forBlock_logic_controls_if_basic; // TODO
@@ -116,8 +115,8 @@ export class CodeGenerator extends Blockly.Generator {
 
     // Operations
     forBlock_action_wait(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const seconds = block.getFieldValue('SECONDS');
-        return generator.formatInstruction(`wait ${seconds * 1000}`);
+        const seconds = Number(block.getFieldValue('SECONDS'));
+        return generator.formatInstruction(Opcode.wait(seconds * 1000));
     }
 
     // Math
@@ -131,41 +130,37 @@ export class CodeGenerator extends Blockly.Generator {
 
     // Motion
     forBlock_action_stop(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        return generator.formatInstruction('stop');
+        return generator.formatInstruction(Opcode.stop());
     }
 
     forBlock_action_backward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
-        return generator.formatInstruction(`backward ${distance}`);
+        return generator.formatInstructions([Opcode.heading(180), Opcode.distance(Number(distance)), Opcode.move(100)]);
     }
     
     forBlock_action_forward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
-        return generator.formatInstruction(`forward ${distance}`);
+        return generator.formatInstructions([Opcode.heading(0), Opcode.distance(Number(distance)), Opcode.move(100)]);
     }
 
     forBlock_action_turn(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? 45;
-        return generator.formatInstruction(`turn ${degrees}`);
+        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(100)]);
     }
 
     forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const speed = block.getFieldValue('SPEED') ?? 100;
-        return generator.formatInstruction(`speed ${speed}`);
+        return generator.formatInstruction(Opcode.speed(Number(speed)));
     }
 
     forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
-        return generator.formatInstruction(`turn -${degrees}`);
+        return generator.formatInstructions([Opcode.heading(-Number(degrees)), Opcode.move(100)]);
     }
 
     forBlock_action_turnright(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
-        return generator.formatInstruction(`turn ${degrees}`);
-    }
-
-    forBlock_action_victory(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        return generator.formatInstruction(`victory`);
+        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(100)]);
     }
 
     forBlock_logic_controls_restart(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {

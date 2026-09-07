@@ -85,13 +85,6 @@ export class EditorConfigBlocks {
             "nextStatement": null,
             "colour": 230,
         },
-        {
-            "type": "action_victory",
-            "message0": "victory",
-            "previousStatement": null,
-            "nextStatement": null,
-            "colour": 230,
-        },
         // logic
         {
             'type': 'controls_if_basic',

@@ -1,11 +1,32 @@
 import { OPCODES } from './schema/opcodes.schema';
+import { INT16_MAX, INT16_MIN } from './schema/protocol.schema';
 
 function mnemonic(constantName: string): string {
     const opcode = OPCODES.find(o => o.constantName === constantName);
     if (!opcode) {
         throw new Error(`Unknown opcode constant '${constantName}' — check src/app/editor/generator/schema/opcodes.schema.ts`);
     }
+
     return opcode.mnemonic;
+}
+
+function int16(value: number, name: string): number {
+    if (!Number.isInteger(value) || value < INT16_MIN || value > INT16_MAX) {
+        throw new RangeError(`${name} must be a signed 16-bit integer`);
+    }
+    return value;
+}
+
+function variableIndex(index: number): number {
+    return int16(index, 'Variable index');
+}
+
+function ranged(value: number, min: number, max: number, name: string): number {
+    const checked = int16(value, name);
+    if (checked < min || checked > max) {
+        throw new RangeError(`${name} must be between ${min} and ${max}`);
+    }
+    return checked;
 }
 
 export class Opcode {
@@ -14,15 +35,15 @@ export class Opcode {
     }
 
     static use(arg: number) : string {
-        return `${mnemonic('OPCODE_USE')} ${arg}`;
+        return `${mnemonic('OPCODE_USE')} ${int16(arg, 'Operand')}`;
     }
 
     static stor(arg: number) : string {
-        return `${mnemonic('OPCODE_STOR')} ${arg}`;
+        return `${mnemonic('OPCODE_STOR')} #${variableIndex(arg)}`;
     }
 
     static load(index: number) : string {
-        return `${mnemonic('OPCODE_LOAD')} ${index}`;
+        return `${mnemonic('OPCODE_LOAD')} #${variableIndex(index)}`;
     }
 
     static jmp_direct(index: number) : string {
@@ -87,5 +108,48 @@ export class Opcode {
 
     static mul_variable(index: number) : string {
         return `${mnemonic('OPCODE_MUL')} #${index}`;
+    }
+
+    static motion(command: string, arg?: number | { variableIndex: number }): string {
+        if (arg === undefined) {
+            return command;
+        }
+        if (typeof arg !== 'number') {
+            return `${command} #${variableIndex(arg.variableIndex)}`;
+        }
+        const ranges: Record<string, [number, number]> = {
+            heading: [-360, 360],
+            distance: [0, INT16_MAX],
+            speed: [0, 100],
+            move: [0, 100],
+            wait: [0, INT16_MAX],
+        };
+        const range = ranges[command];
+        const value = range ? ranged(arg, range[0], range[1], `${command} argument`) : int16(arg, 'Motion argument');
+        return `${command} ${value}`;
+    }
+
+    static heading(arg: number | { variableIndex: number }): string {
+        return Opcode.motion('heading', arg);
+    }
+
+    static distance(arg: number | { variableIndex: number }): string {
+        return Opcode.motion('distance', arg);
+    }
+
+    static speed(arg: number | { variableIndex: number }): string {
+        return Opcode.motion('speed', arg);
+    }
+
+    static move(arg: number | { variableIndex: number }): string {
+        return Opcode.motion('move', arg);
+    }
+
+    static stop(): string {
+        return Opcode.motion('stop');
+    }
+
+    static wait(arg: number | { variableIndex: number }): string {
+        return Opcode.motion('wait', arg);
     }
 }

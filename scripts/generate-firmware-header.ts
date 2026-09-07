@@ -19,7 +19,7 @@ import {
     VARIABLE_LIST_SIZE,
 } from '../src/app/editor/generator/schema/protocol.schema';
 import { OPCODES } from '../src/app/editor/generator/schema/opcodes.schema';
-import { SHARED_MOTION_COMMANDS } from '../src/app/editor/generator/schema/motion.schema';
+import { ROBOT_MOTION_COMMANDS } from '../src/app/editor/generator/schema/motion.schema';
 import {
     CORE_STATE_HEADER_BYTE_LENGTH,
     CORE_STATE_FLAG_BITS,
@@ -52,7 +52,7 @@ export function validateSchema(): void {
     }
 
     const motionMnemonics = new Set<string>();
-    for (const command of SHARED_MOTION_COMMANDS) {
+    for (const command of ROBOT_MOTION_COMMANDS) {
         if (motionMnemonics.has(command.mnemonic)) {
             throw new Error(`Duplicate shared motion command mnemonic: ${command.mnemonic}`);
         }
@@ -125,9 +125,17 @@ export function generateSingleHeader(): string {
         lines.push(`constexpr const char* ${opcode.constantName} = "${opcode.mnemonic}";`);
     }
     lines.push('');
-    lines.push('// Shared vehicle-level motion commands (handled outside CodeInterpreter::step()).');
-    for (const command of SHARED_MOTION_COMMANDS) {
-        const constantName = `MOTION_${command.mnemonic.toUpperCase()}`;
+    lines.push('// Generic robot movement commands (ASCII, one optional signed int16 argument).');
+    lines.push('// heading: relative degrees [-360, 360], default 0.');
+    lines.push('// distance: millimetres [0, 32767], default 0.');
+    lines.push('// speed: requested percent [0, 100], default 100.');
+    lines.push('// move: submits the current heading/distance setpoints; argument is speed [0, 100].');
+    lines.push('// stop: stops motion and clears pending setpoints.');
+    lines.push('// wait: interpreter delay in milliseconds [0, 32767].');
+    for (const command of ROBOT_MOTION_COMMANDS) {
+        const constantName = `ROBOT_${command.mnemonic === 'heading' ? 'SET_HEADING' :
+            command.mnemonic === 'distance' ? 'SET_DISTANCE' :
+            command.mnemonic === 'speed' ? 'SET_SPEED' : command.mnemonic.toUpperCase()}`;
         lines.push(`constexpr const char* ${constantName} = "${command.mnemonic}";`);
     }
     lines.push('');
@@ -207,5 +215,3 @@ function main(): void {
 if (require.main === module) {
     main();
 }
-
-

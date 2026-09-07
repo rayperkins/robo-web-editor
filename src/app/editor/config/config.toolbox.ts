@@ -24,9 +24,6 @@ export class EditorConfigToolbox {
                     },{
                         kind: 'block',
                         type: 'action_wait'
-                    },{
-                        kind: 'block',
-                        type: 'action_victory'
                     }
                 ]
             }, {

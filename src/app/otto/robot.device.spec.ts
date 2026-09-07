@@ -34,6 +34,19 @@ describe('RobotDevice.updateState', () => {
             device.updateState().subscribe({ next: resolve, error: reject });
         });
 
+        describe('RobotDevice.validateCommand', () => {
+            it('accepts one-argument Olibot instructions and set-prefixed program lines', () => {
+                expect(() => RobotDevice.validateCommand('heading 45')).not.toThrow();
+                expect(() => RobotDevice.validateCommand('set0 heading 45')).not.toThrow();
+            });
+
+            it('rejects multiple arguments and instructions over 20 bytes', () => {
+                expect(() => RobotDevice.validateCommand('move 100 200')).toThrow();
+                expect(() => RobotDevice.validateCommand('set0 heading 45 extra')).toThrow();
+                expect(() => RobotDevice.validateCommand('heading 12345678901234567890')).toThrow(RangeError);
+            });
+        });
+
         expect(state.version).toBe(1);
         expect(state.programRunning).toBe(true);
         expect(state.trimLeftLeg).toBe(-1);
@@ -78,4 +91,3 @@ describe('RobotDevice.updateState', () => {
         })).rejects.toBeDefined();
     });
 });
-

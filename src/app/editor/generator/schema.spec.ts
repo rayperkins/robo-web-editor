@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OPCODES } from './schema/opcodes.schema';
-import { MOTION_COMMANDS, SHARED_MOTION_COMMANDS } from './schema/motion.schema';
+import { ROBOT_MOTION_COMMANDS } from './schema/motion.schema';
 import { PROTOCOL_VERSION, INSTRUCTION_SIZE, INSTRUCTION_LIST_SIZE, VARIABLE_LIST_SIZE } from './schema/protocol.schema';
 import { CORE_STATE_FIELDS, CORE_STATE_FLAG_BITS, CORE_STATE_HEADER_BYTE_LENGTH } from './schema/state.schema';
 import { OTTO_ROBOT_SCHEMA } from './schema/robots/otto.schema';
@@ -19,18 +19,22 @@ describe('Protocol Schema and Code Generation', () => {
         expect(VARIABLE_LIST_SIZE).toBe(64);
     });
 
-    it('shares motion commands across robots', () => {
-        expect(SHARED_MOTION_COMMANDS.length).toBeGreaterThan(0);
-        const mnemonics = SHARED_MOTION_COMMANDS.map(m => m.mnemonic);
-        expect(mnemonics).toContain('forward');
-        expect(mnemonics).toContain('backward');
-        expect(mnemonics).toContain('turn');
+    it('shares generic movement capabilities across robots', () => {
+        expect(ROBOT_MOTION_COMMANDS.length).toBeGreaterThan(0);
+        const mnemonics = ROBOT_MOTION_COMMANDS.map(m => m.mnemonic);
         expect(mnemonics).toContain('speed');
+        expect(mnemonics).toContain('heading');
+        expect(mnemonics).toContain('distance');
+        expect(mnemonics).toContain('move');
         expect(mnemonics).toContain('stop');
         expect(mnemonics).toContain('wait');
 
-        expect(OTTO_ROBOT_SCHEMA.motionCommands).toEqual(SHARED_MOTION_COMMANDS);
-        expect(OLIBOT_ROBOT_SCHEMA.motionCommands).toEqual(SHARED_MOTION_COMMANDS);
+        expect(OTTO_ROBOT_SCHEMA.motionCommands).toEqual([
+            ...ROBOT_MOTION_COMMANDS,
+            expect.objectContaining({ mnemonic: 'victory' }),
+        ]);
+        expect(OLIBOT_ROBOT_SCHEMA.motionCommands).toEqual(ROBOT_MOTION_COMMANDS);
+        expect(OLIBOT_ROBOT_SCHEMA.motionCommands.map(m => m.mnemonic)).not.toContain('victory');
     });
 
     it('has robot-specific configuration state layouts', () => {
@@ -55,7 +59,11 @@ describe('Protocol Schema and Code Generation', () => {
         expect(header).toContain('constexpr int PROTOCOL_VERSION = 1;');
         expect(header).toContain('constexpr std::size_t INSTRUCTION_LIST_SIZE = 512;');
         expect(header).toContain('constexpr const char* OPCODE_EXIT = "exit";');
-        expect(header).toContain('constexpr const char* MOTION_TURN = "turn";');
+        expect(header).toContain('constexpr const char* ROBOT_SET_HEADING = "heading";');
+        expect(header).toContain('constexpr const char* ROBOT_MOVE = "move";');
+        expect(header).not.toContain('MOTION_');
+        expect(header).not.toContain('OLIBOT_SET_');
+        expect(header).not.toContain('MOTION_VICTORY');
         expect(header).toContain('struct CoreState');
         expect(header).toContain('struct OlibotState');
         expect(header).toContain('std::int8_t motorBias;');
@@ -65,4 +73,3 @@ describe('Protocol Schema and Code Generation', () => {
         expect(header).toContain('using State = OlibotState;');
     });
 });
-

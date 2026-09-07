@@ -8,8 +8,8 @@ describe('Opcode', () => {
 
         expect(Opcode.exit()).toBe(`${opcodeByConstant.get('OPCODE_EXIT')}`);
         expect(Opcode.use(5)).toBe(`${opcodeByConstant.get('OPCODE_USE')} 5`);
-        expect(Opcode.stor(2)).toBe(`${opcodeByConstant.get('OPCODE_STOR')} 2`);
-        expect(Opcode.load(3)).toBe(`${opcodeByConstant.get('OPCODE_LOAD')} 3`);
+        expect(Opcode.stor(2)).toBe(`${opcodeByConstant.get('OPCODE_STOR')} #2`);
+        expect(Opcode.load(3)).toBe(`${opcodeByConstant.get('OPCODE_LOAD')} #3`);
         expect(Opcode.jmp_direct(7)).toBe(`${opcodeByConstant.get('OPCODE_JMP')} 7`);
         expect(Opcode.jmp(-3)).toBe(`${opcodeByConstant.get('OPCODE_JMP')} @-3`);
         expect(Opcode.jmpe_direct(7)).toBe(`${opcodeByConstant.get('OPCODE_JMPE')} 7`);
@@ -31,5 +31,22 @@ describe('Opcode', () => {
     it('has no duplicate mnemonics in the schema', () => {
         const mnemonics = OPCODES.map(o => o.mnemonic);
         expect(new Set(mnemonics).size).toBe(mnemonics.length);
+    });
+
+    it('emits Olibot setpoint commands as single-argument instructions', () => {
+        expect(Opcode.heading(45)).toBe('heading 45');
+        expect(Opcode.distance(1000)).toBe('distance 1000');
+        expect(Opcode.move(100)).toBe('move 100');
+        expect(Opcode.heading({ variableIndex: 2 })).toBe('heading #2');
+        expect(Opcode.stop()).toBe('stop');
+        expect(Opcode.wait(1000)).toBe('wait 1000');
+    });
+
+    it('rejects invalid signed operands and motion ranges', () => {
+        expect(() => Opcode.use(32768)).toThrow(RangeError);
+        expect(() => Opcode.distance(-1)).toThrow(RangeError);
+        expect(() => Opcode.speed(101)).toThrow(RangeError);
+        expect(() => Opcode.heading(361)).toThrow(RangeError);
+        expect(() => Opcode.move(100)).not.toThrow();
     });
 });

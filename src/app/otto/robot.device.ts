@@ -186,6 +186,13 @@ export class RobotDevice {
         }
 
         const command = commands[currentIndex];
+        try {
+            RobotDevice.validateCommand(command);
+        } catch (error) {
+            observer.error(error);
+            observer.complete();
+            return;
+        }
 
         Logger.log('sending data ', this._bleDevice, ' ', command);
         const enc = new TextEncoder(); // always utf-8
@@ -199,6 +206,7 @@ export class RobotDevice {
                 if(currentIndex < commands.length) {
                     this.sendCommandInternal(observer, commands, currentIndex);
                 }
+
                 else {
                     observer.complete();
                 }
@@ -207,6 +215,24 @@ export class RobotDevice {
                 observer.error(error);
                 observer.complete();
             });
+    }
+
+    public static validateCommand(command: string): void {
+        const trimmed = command.trim();
+        if (trimmed.length === 0) {
+            throw new Error('Command must not be empty');
+        }
+
+        const byteLength = new TextEncoder().encode(trimmed).byteLength;
+        if (byteLength > 20) {
+            throw new RangeError(`Command exceeds the 20-byte instruction limit: ${byteLength}`);
+        }
+
+        const tokens = trimmed.split(/\s+/);
+        const instructionTokens = /^set\d+$/.test(tokens[0]) ? tokens.slice(1) : tokens;
+        if (instructionTokens.length > 2) {
+            throw new Error('Instructions may contain at most one argument');
+        }
     }
 
     private disconnectIfConnected(): void {
@@ -235,4 +261,3 @@ export namespace RobotDevice
         sensorDistance: number;
     }
 }
-

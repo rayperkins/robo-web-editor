@@ -21,6 +21,16 @@ import { RobotDevice } from '../../otto/robot.device';
 })
 export class OlibotRemoteDialog {
   readonly isSendingCommand = signal(false);
+  readonly commands = {
+    forward: 'heading 0|distance 100|move 100',
+    backward: 'heading 180|distance 100|move 100',
+    left: 'heading -45|move 100',
+    right: 'heading 45|move 100',
+    stop: 'stop',
+    speed30: 'speed 30',
+    speed60: 'speed 60',
+    speed100: 'speed 100',
+  } as const;
 
   constructor(
     private dialogRef: MatDialogRef<OlibotRemoteDialog>,
@@ -34,7 +44,8 @@ export class OlibotRemoteDialog {
   sendCommand(command: string) {
     if (this.robotDevice !== null) {
       this.isSendingCommand.set(true);
-      this.robotDevice.sendCommand(command).subscribe({
+      const commands = command.split('|');
+      this.robotDevice.sendCommands(commands).subscribe({
         next: () => {
           this.isSendingCommand.set(false);
         },
