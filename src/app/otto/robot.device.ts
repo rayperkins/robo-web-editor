@@ -1,5 +1,6 @@
 import { Observable, Subject, Subscriber } from "rxjs";
 import { Logger } from "../logger";
+import { STATE_BYTE_LENGTH, STATE_FIELDS, STATE_FLAG_BITS } from "../editor/generator/schema/state.schema";
 
 export class RobotDevice {
 
@@ -97,36 +98,43 @@ export class RobotDevice {
             this._gattCharacteristic
                 .readValue()
                 .then((dataView) => {
-                    if (dataView.byteLength < 1) {
-                        observer.error(`state payload too short: expected at least 1 byte, got ${dataView.byteLength}`);
+                    if (dataView.byteLength < STATE_BYTE_LENGTH) {
+                        observer.error(`state payload too short: expected ${STATE_BYTE_LENGTH} bytes, got ${dataView.byteLength}`);
                         observer.complete();
                         return;
                     }
 
-                    //dataView.
-                    const version = dataView.getUint8(0);
-
-                    if(version == 1 && dataView.byteLength > 1) {
-                        const flags = dataView.getUint8(1);
-
-                        const state: RobotDevice.State = {
-                            version: version,
-                            programRunning: (flags & 0x01) > 0,
-                            // calibration
-                            trimLeftLeg: dataView.getInt8(4),
-                            trimRightLeg: dataView.getInt8(5),
-                            trimLeftFoot: dataView.getInt8(6),
-                            trimRightFoot: dataView.getInt8(7),
-                            // sensors
-                            sensorDistance: ((dataView.getUint8(9) << 8) + (dataView.getUint8(8) << 0))
-                        };
-                    
-
-                        this.state = state;
-
-                        observer.next(state);
+                    const rawFields: Record<string, number> = {};
+                    for (const field of STATE_FIELDS) {
+                        switch (field.type) {
+                            case 'u8':
+                                rawFields[field.name] = dataView.getUint8(field.offset);
+                                break;
+                            case 'i8':
+                                rawFields[field.name] = dataView.getInt8(field.offset);
+                                break;
+                            case 'u16le':
+                                rawFields[field.name] = dataView.getUint8(field.offset) | (dataView.getUint8(field.offset + 1) << 8);
+                                break;
+                        }
                     }
 
+                    const flags = rawFields['flags'] ?? 0;
+                    const state: RobotDevice.State = {
+                        version: rawFields['version'],
+                        programRunning: STATE_FLAG_BITS.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
+                        // calibration
+                        trimLeftLeg: rawFields['trimLeftLeg'],
+                        trimRightLeg: rawFields['trimRightLeg'],
+                        trimLeftFoot: rawFields['trimLeftFoot'],
+                        trimRightFoot: rawFields['trimRightFoot'],
+                        // sensors
+                        sensorDistance: rawFields['sensorDistance']
+                    };
+
+                    this.state = state;
+
+                    observer.next(state);
                     observer.complete();
                 })
                 .catch(error => {

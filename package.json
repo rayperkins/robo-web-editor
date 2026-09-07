@@ -8,7 +8,9 @@
     "start": "ng serve --host 0.0.0.0 --port 3000 --disable-host-check",
     "build": "ng build",
     "test": "ng test",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "generate:firmware-header": "ts-node --project tsconfig.scripts.json scripts/generate-firmware-header.ts",
+    "generate:firmware-header:check": "ts-node --project tsconfig.scripts.json scripts/generate-firmware-header.ts --check"
   },
   "private": true,
   "dependencies": {
