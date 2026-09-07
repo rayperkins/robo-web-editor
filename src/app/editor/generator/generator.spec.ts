@@ -10,16 +10,20 @@ function block(fields: Record<string, unknown>): any {
 describe('CodeGenerator Olibot motion instructions', () => {
     const generator = new CodeGenerator();
 
-    it('compiles forward motion into heading, distance, and move setpoints', () => {
+    it('compiles forward motion into a positive distance setpoint', () => {
         expect(generator.forBlock_action_forward(block({ DISTANCE: 1000 }), generator)).toBe(
-            'heading 0\ndistance 1000\nmove 100\n'
+            'distance 1000\n'
         );
     });
 
-    it('compiles backward motion without multiple motion arguments', () => {
+    it('compiles backward motion into a negative distance setpoint', () => {
         expect(generator.forBlock_action_backward(block({ DISTANCE: 1000 }), generator)).toBe(
-            'heading 180\ndistance 1000\nmove 100\n'
+            'distance -1000\n'
         );
+    });
+
+    it('compiles the move block into a speed command', () => {
+        expect(generator.forBlock_action_speed(block({ SPEED: 60 }), generator)).toBe('move 60\n');
     });
 
     it('compiles wait using the interpreter duration convention', () => {

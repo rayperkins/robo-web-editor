@@ -27,7 +27,7 @@ export class EditorConfigBlocks {
         },
         {
             "type": "action_forward",
-            "message0": "move forward %1 mm",
+            "message0": "set forward %1 mm",
             "args0": [{
                 "type": "field_number",
                 "name": "DISTANCE",
@@ -42,7 +42,7 @@ export class EditorConfigBlocks {
         },
         {
             "type": "action_backward",
-            "message0": "move backward %1 mm",
+            "message0": "set backward %1 mm",
             "args0": [{
                 "type": "field_number",
                 "name": "DISTANCE",
@@ -72,7 +72,7 @@ export class EditorConfigBlocks {
         },
         {
             "type": "action_speed",
-            "message0": "set speed %1 %",
+            "message0": "move %1 %",
             "args0": [{
                 "type": "field_number",
                 "name": "SPEED",

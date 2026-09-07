@@ -150,12 +150,12 @@ export class CodeGenerator extends Blockly.Generator {
 
     forBlock_action_backward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
-        return generator.formatInstructions([Opcode.heading(180), Opcode.distance(Number(distance)), Opcode.move(100)]);
+        return generator.formatInstruction(Opcode.distance(-Number(distance)));
     }
     
     forBlock_action_forward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
-        return generator.formatInstructions([Opcode.heading(0), Opcode.distance(Number(distance)), Opcode.move(100)]);
+        return generator.formatInstruction(Opcode.distance(Number(distance)));
     }
 
     forBlock_action_turn(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
@@ -165,7 +165,7 @@ export class CodeGenerator extends Blockly.Generator {
 
     forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const speed = block.getFieldValue('SPEED') ?? 100;
-        return generator.formatInstruction(Opcode.speed(Number(speed)));
+        return generator.formatInstruction(Opcode.move(Number(speed)));
     }
 
     forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
