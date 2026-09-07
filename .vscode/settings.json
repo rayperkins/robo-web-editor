@@ -1,15 +1,2 @@
 {
-    "files.associations": {
-        "memory": "cpp",
-        "future": "cpp",
-        "istream": "cpp",
-        "functional": "cpp",
-        "string_view": "cpp",
-        "regex": "cpp",
-        "iosfwd": "cpp",
-        "compare": "cpp",
-        "chrono": "cpp",
-        "variant": "cpp",
-        "cstring": "cpp"
-    }
 }
