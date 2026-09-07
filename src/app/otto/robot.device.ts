@@ -3,15 +3,32 @@ import { Logger } from "../logger";
 import { RobotSchema } from "../editor/generator/schema/robot-types";
 import { OTTO_ROBOT_SCHEMA } from "../editor/generator/schema/robots/otto.schema";
 import { OLIBOT_ROBOT_SCHEMA } from "../editor/generator/schema/robots/olibot.schema";
+import {
+    BLE_COMMAND_MAX_PAYLOAD_BYTES,
+    BLE_COMMAND_TIMEOUT_MS,
+    BLE_COMMAND_WRITE_CHARACTERISTIC_UUID,
+    BLE_RESPONSE_CHARACTERISTIC_UUID,
+    BLE_SERVICE_UUID,
+    BLE_STATE_CHARACTERISTIC_UUID,
+    parseBleResponse,
+} from "../editor/generator/schema/transport.schema";
+import { PROGRAM_COMMANDS } from "../editor/generator/schema/program.schema";
+import { OPCODES } from "../editor/generator/schema/opcodes.schema";
+import { ROBOT_MOTION_COMMANDS } from "../editor/generator/schema/motion.schema";
 
 export type RobotTypeId = 'otto' | 'olibot';
 
 export class RobotDevice {
 
-    public static UartServiceUuid: BluetoothServiceUUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+    public static UartServiceUuid: BluetoothServiceUUID = BLE_SERVICE_UUID;
+    public static CommandWriteCharacteristicUuid: BluetoothCharacteristicUUID = BLE_COMMAND_WRITE_CHARACTERISTIC_UUID;
+    public static ResponseCharacteristicUuid: BluetoothCharacteristicUUID = BLE_RESPONSE_CHARACTERISTIC_UUID;
+    public static StateCharacteristicUuid: BluetoothCharacteristicUUID = BLE_STATE_CHARACTERISTIC_UUID;
     private readonly _bleDevice: BluetoothDevice;
     private _gattServer?: BluetoothRemoteGATTServer;
     private _gattCharacteristic?: BluetoothRemoteGATTCharacteristic;
+    private _responseCharacteristic?: BluetoothRemoteGATTCharacteristic;
+    private _stateCharacteristic?: BluetoothRemoteGATTCharacteristic;
 
     public state?: RobotDevice.State;
 
@@ -49,10 +66,14 @@ export class RobotDevice {
                     const service = await gattServer.getPrimaryService(RobotDevice.UartServiceUuid);
                     Logger.log('got primary service for' , this._bleDevice, ' service ', service);
 
-                    const characteristic = await service.getCharacteristics();
-                    Logger.log('got characteristics for ', this._bleDevice);
-
-                    this._gattCharacteristic = characteristic[0];
+                    this._gattCharacteristic = await service.getCharacteristic(RobotDevice.CommandWriteCharacteristicUuid);
+                    this._responseCharacteristic = await service.getCharacteristic(RobotDevice.ResponseCharacteristicUuid);
+                    this._stateCharacteristic = await service.getCharacteristic(RobotDevice.StateCharacteristicUuid);
+                    await this._responseCharacteristic.startNotifications();
+                    this._responseCharacteristic.addEventListener('characteristicvaluechanged', this.onResponse);
+                    await this._stateCharacteristic.startNotifications();
+                    this._stateCharacteristic.addEventListener('characteristicvaluechanged', this.onStateNotification);
+                    Logger.log('got protocol characteristics for ', this._bleDevice);
 
                     observer.next(gattServer.connected);
                     resolve(gattServer.connected);
@@ -109,7 +130,8 @@ export class RobotDevice {
         const subject = new Subject<RobotDevice.State>();
         const observable = new Observable<RobotDevice.State>(observer => {
             // check is connected
-            if(this._gattServer?.connected !== true || !this._gattCharacteristic) {
+            const stateCharacteristic = this._stateCharacteristic ?? this._gattCharacteristic;
+            if(this._gattServer?.connected !== true || !stateCharacteristic) {
                 observer.error("not connected");
                 observer.complete();
                 return;
@@ -117,11 +139,11 @@ export class RobotDevice {
 
             const schema = this.schema;
 
-            this._gattCharacteristic
+            stateCharacteristic
                 .readValue()
                 .then((dataView) => {
-                    if (dataView.byteLength < schema.stateByteLength) {
-                        observer.error(`state payload too short: expected ${schema.stateByteLength} bytes, got ${dataView.byteLength}`);
+                    if (dataView.byteLength !== schema.stateByteLength) {
+                        observer.error(`state payload length mismatch: expected ${schema.stateByteLength} bytes, got ${dataView.byteLength}`);
                         observer.complete();
                         return;
                     }
@@ -196,9 +218,23 @@ export class RobotDevice {
 
         Logger.log('sending data ', this._bleDevice, ' ', command);
         const enc = new TextEncoder(); // always utf-8
-        this._gattCharacteristic
-            .writeValue(enc.encode(command))
-            .then(() => {
+        const payload = enc.encode(`${command}\n`);
+        if (payload.byteLength > BLE_COMMAND_MAX_PAYLOAD_BYTES) {
+            observer.error(new RangeError(`Command exceeds the ${BLE_COMMAND_MAX_PAYLOAD_BYTES}-byte payload limit`));
+            observer.complete();
+            return;
+        }
+        const write = this._gattCharacteristic.writeValueWithResponse
+            ? this._gattCharacteristic.writeValueWithResponse(payload)
+            : this._gattCharacteristic.writeValue(payload);
+        Promise.race([
+            write,
+            new Promise<void>((_, reject) => setTimeout(
+                () => reject(new Error(`Command write timed out after ${BLE_COMMAND_TIMEOUT_MS} ms`)),
+                BLE_COMMAND_TIMEOUT_MS
+            )),
+        ])
+        .then(() => {
                 observer.next(currentIndex);
 
                 currentIndex ++;
@@ -224,16 +260,79 @@ export class RobotDevice {
         }
 
         const byteLength = new TextEncoder().encode(trimmed).byteLength;
-        if (byteLength > 20) {
-            throw new RangeError(`Command exceeds the 20-byte instruction limit: ${byteLength}`);
+        if (byteLength > BLE_COMMAND_MAX_PAYLOAD_BYTES) {
+            throw new RangeError(`Command exceeds the ${BLE_COMMAND_MAX_PAYLOAD_BYTES}-byte instruction limit: ${byteLength}`);
         }
 
         const tokens = trimmed.split(/\s+/);
-        const instructionTokens = /^set\d+$/.test(tokens[0]) ? tokens.slice(1) : tokens;
+        const upload = /^set(\d+)$/.exec(tokens[0]);
+        const instructionTokens = upload ? tokens.slice(1) : tokens;
         if (instructionTokens.length > 2) {
             throw new Error('Instructions may contain at most one argument');
         }
+        const mnemonic = instructionTokens[0];
+        const opcode = OPCODES.find(item => item.mnemonic === mnemonic);
+        const motion = ROBOT_MOTION_COMMANDS.find(item => item.mnemonic === mnemonic);
+        const program = PROGRAM_COMMANDS.find(item => item.mnemonic === mnemonic);
+        const known = Boolean(opcode || motion || program);
+        if (!known) {
+            throw new Error(`Unsupported command '${mnemonic}'`);
+        }
+        if (upload && program) {
+            throw new Error('Program lifecycle commands cannot be stored as instructions');
+        }
+        const definition = opcode ?? motion;
+        if (definition?.argKind === 'none' && instructionTokens.length !== 1) {
+            throw new Error(`${mnemonic} does not accept an argument`);
+        }
+        if (definition && definition.argKind !== 'none' && instructionTokens.length !== 2) {
+            throw new Error(`${mnemonic} requires one argument`);
+        }
+        if (instructionTokens.length === 2 && !/^#?-?\d+$/.test(instructionTokens[1])) {
+            throw new Error(`${mnemonic} argument must be a signed integer or #variable reference`);
+        }
+        if (instructionTokens.length === 2) {
+            const argument = instructionTokens[1];
+            const isVariable = argument.startsWith('#');
+            const value = Number(isVariable ? argument.slice(1) : argument);
+            if (!Number.isInteger(value) || value < -32768 || value > 32767) {
+                throw new RangeError(`${mnemonic} argument must be a signed 16-bit integer`);
+            }
+            if (isVariable && (value < 0 || value >= 64)) {
+                throw new RangeError('Variable index must be between 0 and 63');
+            }
+            if (!isVariable && mnemonic === 'heading' && (value < -360 || value > 360)) {
+                throw new RangeError('heading argument must be between -360 and 360');
+            }
+            if (!isVariable && mnemonic === 'wait' && value < 0) {
+                throw new RangeError(`${mnemonic} argument must not be negative`);
+            }
+            if (!isVariable && (mnemonic === 'speed' || mnemonic === 'move') && (value < 0 || value > 100)) {
+                throw new RangeError(`${mnemonic} argument must be between 0 and 100`);
+            }
+        }
+        if (upload && Number(upload[1]) >= 512) {
+            throw new RangeError('Program instruction index must be between 0 and 511');
+        }
+        if (mnemonic === 'stop' && instructionTokens.length !== 1) {
+            throw new Error('Motion stop does not accept an argument');
+        }
     }
+
+    private readonly onResponse = (event: Event): void => {
+        const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
+        const payload = new TextDecoder().decode(characteristic.value);
+        const response = parseBleResponse(payload);
+        if (response.kind === 'error') {
+            Logger.log('firmware rejected command', response.message);
+        }
+    };
+
+    private readonly onStateNotification = (): void => {
+        this.updateState().subscribe({
+            error: error => Logger.log('state notification decode failed', error),
+        });
+    };
 
     private disconnectIfConnected(): void {
         if (this._gattServer && this._gattServer.connected) {

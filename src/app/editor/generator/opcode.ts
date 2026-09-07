@@ -1,5 +1,6 @@
 import { OPCODES } from './schema/opcodes.schema';
 import { INT16_MAX, INT16_MIN } from './schema/protocol.schema';
+import { ROBOT_MOTION_COMMANDS } from './schema/motion.schema';
 
 function mnemonic(constantName: string): string {
     const opcode = OPCODES.find(o => o.constantName === constantName);
@@ -111,22 +112,39 @@ export class Opcode {
     }
 
     static motion(command: string, arg?: number | { variableIndex: number }): string {
+        const definition = ROBOT_MOTION_COMMANDS.find(item => item.mnemonic === command);
+        if (!definition) {
+            throw new Error(`Unknown motion command '${command}'`);
+        }
         if (arg === undefined) {
+            if (definition.argKind !== 'none') {
+                throw new Error(`${command} requires one argument`);
+            }
             return command;
         }
+        if (definition.argKind === 'none') {
+            throw new Error(`${command} does not accept an argument`);
+        }
         if (typeof arg !== 'number') {
+            if (!Number.isInteger(arg.variableIndex) || arg.variableIndex < 0 || arg.variableIndex >= 64) {
+                throw new RangeError('Variable index must be between 0 and 63');
+            }
             return `${command} #${variableIndex(arg.variableIndex)}`;
         }
         const ranges: Record<string, [number, number]> = {
             heading: [-360, 360],
-            distance: [0, INT16_MAX],
+            distance: [-32768, INT16_MAX],
             speed: [0, 100],
             move: [0, 100],
             wait: [0, INT16_MAX],
         };
         const range = ranges[command];
         const value = range ? ranged(arg, range[0], range[1], `${command} argument`) : int16(arg, 'Motion argument');
-        return `${command} ${value}`;
+        const result = `${command} ${value}`;
+        if (new TextEncoder().encode(result).byteLength > 20) {
+            throw new RangeError('Instruction exceeds the 20-byte limit');
+        }
+        return result;
     }
 
     static heading(arg: number | { variableIndex: number }): string {

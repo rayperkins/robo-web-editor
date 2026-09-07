@@ -30,15 +30,20 @@ The firmware for compatible robots (Bluetooth communication layer and per-robot 
 
 The editor's code generator (see [generator.ts](/home/rayperkins/repos/personal/robo-web-editor/src/app/editor/generator/generator.ts) and [opcode.ts](/home/rayperkins/repos/personal/robo-web-editor/src/app/editor/generator/opcode.ts)) compiles the Blockly workspace into a list of fixed-size instructions that are streamed to the robot over Bluetooth (BLE). This section documents that wire format so it stays in sync between the editor and any firmware variant that consumes it.
 
-Each instruction line is allocated 20 bytes (BLE packet size).
+Each instruction line is allocated 20 bytes (BLE payload size, including the
+newline terminator used by the transport).
 Supports only 16bit integers: -32,768 to +32,767
 Has max of 512 lines (firmware `INSTRUCTION_LIST_SIZE`).
 a '#' in front of the constant indicates a variable address
 
-The BLE packet to set a particular instruction line is:
+The BLE command to set a particular instruction line is:
 ```
-set9999 add -32768
+set0 heading 0
 ```
+`set<number>` is transport syntax only; firmware stores `heading 0` in slot
+zero. The index range is 0..511. Uploading does not start execution. Send
+`run` as a separate lifecycle command. `stop` stops motion and clears pending
+motion setpoints; `program_stop` stops/cancels the interpreter program.
 
 Logic and Program flow
 ```
@@ -93,12 +98,34 @@ Shared Motion commands
 ```
 // Robot setpoint motion (one optional argument per instruction)
 heading 45        // Set relative heading target in degrees (-360..360)
-distance 1000     // Set travel distance target in millimetres (0..32767)
+distance 1000     // Set signed travel distance target in millimetres (-32768..32767); negative drives in reverse
 speed 80          // Set requested speed in percent (0..100)
 move 100           // Submit heading/distance using this speed (0..100)
 stop              // Stop and clear pending motion setpoints
 wait 1000         // Pause interpreter execution in milliseconds (0..32767)
 ```
+
+Direct remote control uses the same motion instructions without `set<number>`;
+setpoints (`heading`, `distance`, and `speed`) only update pending values and
+`move` submits motion. `#N` variable references are legal for interpreter
+instructions, including motion arguments, but not for direct user-entered
+transport commands unless the referenced variable exists in the interpreter.
+
+### Stage 1 BLE transport
+
+The authoritative transport constants are in
+[`transport.schema.ts`](/workspaces/robo-web-editor/src/app/editor/generator/schema/transport.schema.ts)
+and are emitted to [`robot-protocol.h`](/workspaces/robo-web-editor/generated/robot-protocol.h).
+The service UUID is `FFE0`; command writes use `FFE1` with acknowledged
+`writeValueWithResponse`, responses use notifying `FFE2`, and binary state uses
+read/notify `FFE3`. A command is one complete UTF-8 ASCII line terminated by
+`\n`; the firmware must buffer fragmented notifications/writes until newline
+and reject lines over 20 bytes. Commands are serialized, so the acknowledged
+write is the in-flight correlation boundary. Response payloads are
+`ack <request-id> <message>` or `err <request-id> <message>`. State payloads
+are exactly 10 bytes, version 1, little-endian, with offsets defined by the
+robot state schemas; JavaScript decodes fields explicitly rather than reading
+a packed C++ object.
 
 ## Robot Protocol & Firmware Header
 
@@ -119,4 +146,3 @@ Verify the header is up-to-date in CI via:
 ```bash
 npm run generate:firmware-header:check
 ```
-

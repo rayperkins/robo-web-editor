@@ -3,7 +3,7 @@
 // opcode table (e.g. by firmware's robot-specific motion controller /
 // instruction handler), but are part of the BLE wire format shared across robots.
 
-export type MotionArgKind = 'none' | 'steps' | 'speed' | 'distanceMm' | 'headingDeg' | 'durationMs' | 'direction' | 'int16OrVariableIndex';
+export type MotionArgKind = 'none' | 'int16OrVariableIndex';
 
 export interface MotionCommandDefinition {
     /** Wire mnemonic text, e.g. "forward", "turn". */
@@ -22,10 +22,11 @@ export interface MotionCommandDefinition {
  */
 export const ROBOT_MOTION_COMMANDS: readonly MotionCommandDefinition[] = [
     { mnemonic: 'heading', argKind: 'int16OrVariableIndex', min: -360, max: 360, defaultValue: 0, description: 'Set the relative heading target in degrees.' },
-    { mnemonic: 'distance', argKind: 'int16OrVariableIndex', min: 0, max: 32767, defaultValue: 0, description: 'Set the travel distance target in millimetres.' },
+    { mnemonic: 'distance', argKind: 'int16OrVariableIndex', min: -32768, max: 32767, defaultValue: 0, description: 'Set the signed travel distance target in millimetres; negative values drive in reverse.' },
     { mnemonic: 'speed', argKind: 'int16OrVariableIndex', min: 0, max: 100, defaultValue: 100, description: 'Set the requested speed percentage.' },
     { mnemonic: 'move', argKind: 'int16OrVariableIndex', min: 0, max: 100, defaultValue: 100, description: 'Submit the current heading and distance setpoints; the argument is the requested speed percentage.' },
     { mnemonic: 'stop', argKind: 'none', description: 'Stop motion and clear pending movement setpoints.' },
     { mnemonic: 'wait', argKind: 'int16OrVariableIndex', min: 0, max: 32767, description: 'Wait in the interpreter without issuing a movement command; duration is milliseconds.' },
 ] as const;
 
+export const MOTION_VARIABLE_REFERENCES_ALLOWED = true;

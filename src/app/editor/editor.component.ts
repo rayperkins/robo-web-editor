@@ -73,7 +73,7 @@ export class EditorComponent implements OnInit {
   }
 
   testCodeClicked() {
-    const commands = ['clear', ...this.codeGenerator.workspaceToSetCommands(this.codeWorkspace), 'start'];
+    const commands = ['clear', ...this.codeGenerator.workspaceToProgramUploadCommands(this.codeWorkspace), 'run'];
     console.log(commands);
   }
 
@@ -90,7 +90,7 @@ export class EditorComponent implements OnInit {
       //   'start'
       // ];
 
-      const commands = ['clear', ...this.codeGenerator.workspaceToSetCommands(this.codeWorkspace), 'start'];
+      const commands = ['clear', ...this.codeGenerator.workspaceToProgramUploadCommands(this.codeWorkspace), 'run'];
       //const commands = ['set0 victory', 'start'];
       console.log(commands);
       device.sendCommands(commands);

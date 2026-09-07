@@ -1,6 +1,7 @@
 import * as Blockly from 'blockly';
 import { Names, Variables, } from 'blockly';
 import { Opcode } from './opcode';
+import { PROGRAM_UPLOAD_INDEX_MAX, PROGRAM_UPLOAD_INDEX_MIN, PROGRAM_UPLOAD_PREFIX } from './schema/program.schema';
 
 enum Order {
   ATOMIC = 0, 
@@ -54,7 +55,7 @@ export class CodeGenerator extends Blockly.Generator {
         return result;
     }
 
-    workspaceToSetCommands(workspace?: Blockly.Workspace): string[] {
+    workspaceToInstructions(workspace?: Blockly.Workspace): string[] {
         const result = super.workspaceToCode(workspace);
         let lines = result.split("\n");
         let outputLines = [];
@@ -74,7 +75,21 @@ export class CodeGenerator extends Blockly.Generator {
             }
         }
 
-        return outputLines;
+        return outputLines.map(line => line.replace(/^set\d+\s+/, ''));
+    }
+
+    workspaceToProgramUploadCommands(workspace?: Blockly.Workspace): string[] {
+        return this.workspaceToInstructions(workspace).map((instruction, index) => {
+            if (index < PROGRAM_UPLOAD_INDEX_MIN || index > PROGRAM_UPLOAD_INDEX_MAX) {
+                throw new RangeError(`Program instruction index must be between ${PROGRAM_UPLOAD_INDEX_MIN} and ${PROGRAM_UPLOAD_INDEX_MAX}`);
+            }
+            return `${PROGRAM_UPLOAD_PREFIX}${index} ${instruction}`;
+        });
+    }
+
+    /** @deprecated Use workspaceToProgramUploadCommands. */
+    workspaceToSetCommands(workspace?: Blockly.Workspace): string[] {
+        return this.workspaceToProgramUploadCommands(workspace);
     }
 
     scrub_(block: Blockly.Block, code: string, thisOnly?: boolean): string {

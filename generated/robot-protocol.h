@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 namespace robot::protocol {
 
@@ -13,6 +14,23 @@ constexpr int PROTOCOL_VERSION = 1;
 constexpr std::size_t INSTRUCTION_SIZE = 20;
 constexpr std::size_t INSTRUCTION_LIST_SIZE = 512;
 constexpr std::size_t VARIABLE_LIST_SIZE = 64;
+
+// Program transport and lifecycle.
+constexpr const char* PROGRAM_UPLOAD_PREFIX = "set";
+constexpr std::size_t PROGRAM_UPLOAD_INDEX_MAX = 511;
+constexpr const char* PROGRAM_CLEAR = "clear";
+constexpr const char* PROGRAM_RUN = "run";
+constexpr const char* PROGRAM_PROGRAM_STOP = "program_stop";
+
+// BLE transport contract.
+constexpr const char* BLE_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+constexpr const char* BLE_COMMAND_WRITE_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+constexpr const char* BLE_RESPONSE_CHARACTERISTIC_UUID = "0000ffe2-0000-1000-8000-00805f9b34fb";
+constexpr const char* BLE_STATE_CHARACTERISTIC_UUID = "0000ffe3-0000-1000-8000-00805f9b34fb";
+constexpr bool BLE_COMMAND_WRITE_WITH_RESPONSE = true;
+constexpr std::size_t BLE_COMMAND_MAX_PAYLOAD_BYTES = 20;
+constexpr char BLE_COMMAND_TERMINATOR = '\n';
+constexpr std::size_t BLE_STATE_PAYLOAD_LENGTH = 10;
 
 // Program instruction opcodes (handled by CodeInterpreter::step()).
 constexpr const char* OPCODE_EXIT = "exit";
@@ -30,7 +48,7 @@ constexpr const char* OPCODE_MUL = "mul";
 
 // Generic robot movement commands (ASCII, one optional signed int16 argument).
 // heading: relative degrees [-360, 360], default 0.
-// distance: millimetres [0, 32767], default 0.
+// distance: signed millimetres [-32768, 32767], default 0; negative drives in reverse.
 // speed: requested percent [0, 100], default 100.
 // move: submits the current heading/distance setpoints; argument is speed [0, 100].
 // stop: stops motion and clears pending setpoints.

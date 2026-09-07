@@ -22,10 +22,10 @@ import { RobotDevice } from '../../otto/robot.device';
 export class OlibotRemoteDialog {
   readonly isSendingCommand = signal(false);
   readonly commands = {
-    forward: 'heading 0|distance 100|move 100',
-    backward: 'heading 180|distance 100|move 100',
-    left: 'heading -45|move 100',
-    right: 'heading 45|move 100',
+    forward: 'heading 0|distance 50|move 50',
+    backward: 'heading 0|distance -50|move 50',
+    left: 'heading -90|move 50',
+    right: 'heading 90|move 50',
     stop: 'stop',
     speed30: 'speed 30',
     speed60: 'speed 60',

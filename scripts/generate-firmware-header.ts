@@ -18,6 +18,17 @@ import {
     INSTRUCTION_LIST_SIZE,
     VARIABLE_LIST_SIZE,
 } from '../src/app/editor/generator/schema/protocol.schema';
+import { PROGRAM_COMMANDS, PROGRAM_UPLOAD_INDEX_MAX } from '../src/app/editor/generator/schema/program.schema';
+import {
+    BLE_COMMAND_MAX_PAYLOAD_BYTES,
+    BLE_COMMAND_TERMINATOR,
+    BLE_COMMAND_WRITE_CHARACTERISTIC_UUID,
+    BLE_RESPONSE_CHARACTERISTIC_UUID,
+    BLE_SERVICE_UUID,
+    BLE_STATE_CHARACTERISTIC_UUID,
+    BLE_STATE_PAYLOAD_LENGTH,
+    BLE_COMMAND_WRITE_WITH_RESPONSE,
+} from '../src/app/editor/generator/schema/transport.schema';
 import { OPCODES } from '../src/app/editor/generator/schema/opcodes.schema';
 import { ROBOT_MOTION_COMMANDS } from '../src/app/editor/generator/schema/motion.schema';
 import {
@@ -110,6 +121,7 @@ export function generateSingleHeader(): string {
     lines.push('#pragma once');
     lines.push('');
     lines.push('#include <cstdint>');
+    lines.push('#include <cstddef>');
     lines.push('');
     lines.push('namespace robot::protocol {');
     lines.push('');
@@ -120,6 +132,23 @@ export function generateSingleHeader(): string {
     lines.push(`constexpr std::size_t INSTRUCTION_LIST_SIZE = ${INSTRUCTION_LIST_SIZE};`);
     lines.push(`constexpr std::size_t VARIABLE_LIST_SIZE = ${VARIABLE_LIST_SIZE};`);
     lines.push('');
+    lines.push('// Program transport and lifecycle.');
+    lines.push('constexpr const char* PROGRAM_UPLOAD_PREFIX = "set";');
+    lines.push(`constexpr std::size_t PROGRAM_UPLOAD_INDEX_MAX = ${PROGRAM_UPLOAD_INDEX_MAX};`);
+    for (const command of PROGRAM_COMMANDS) {
+        lines.push(`constexpr const char* PROGRAM_${command.mnemonic.toUpperCase()} = "${command.mnemonic}";`);
+    }
+    lines.push('');
+    lines.push('// BLE transport contract.');
+    lines.push(`constexpr const char* BLE_SERVICE_UUID = "${BLE_SERVICE_UUID}";`);
+    lines.push(`constexpr const char* BLE_COMMAND_WRITE_CHARACTERISTIC_UUID = "${BLE_COMMAND_WRITE_CHARACTERISTIC_UUID}";`);
+    lines.push(`constexpr const char* BLE_RESPONSE_CHARACTERISTIC_UUID = "${BLE_RESPONSE_CHARACTERISTIC_UUID}";`);
+    lines.push(`constexpr const char* BLE_STATE_CHARACTERISTIC_UUID = "${BLE_STATE_CHARACTERISTIC_UUID}";`);
+    lines.push(`constexpr bool BLE_COMMAND_WRITE_WITH_RESPONSE = ${BLE_COMMAND_WRITE_WITH_RESPONSE ? 'true' : 'false'};`);
+    lines.push(`constexpr std::size_t BLE_COMMAND_MAX_PAYLOAD_BYTES = ${BLE_COMMAND_MAX_PAYLOAD_BYTES};`);
+    lines.push(`constexpr char BLE_COMMAND_TERMINATOR = '${BLE_COMMAND_TERMINATOR === '\n' ? '\\n' : BLE_COMMAND_TERMINATOR}';`);
+    lines.push(`constexpr std::size_t BLE_STATE_PAYLOAD_LENGTH = ${BLE_STATE_PAYLOAD_LENGTH};`);
+    lines.push('');
     lines.push('// Program instruction opcodes (handled by CodeInterpreter::step()).');
     for (const opcode of OPCODES) {
         lines.push(`constexpr const char* ${opcode.constantName} = "${opcode.mnemonic}";`);
@@ -127,7 +156,7 @@ export function generateSingleHeader(): string {
     lines.push('');
     lines.push('// Generic robot movement commands (ASCII, one optional signed int16 argument).');
     lines.push('// heading: relative degrees [-360, 360], default 0.');
-    lines.push('// distance: millimetres [0, 32767], default 0.');
+    lines.push('// distance: signed millimetres [-32768, 32767], default 0; negative drives in reverse.');
     lines.push('// speed: requested percent [0, 100], default 100.');
     lines.push('// move: submits the current heading/distance setpoints; argument is speed [0, 100].');
     lines.push('// stop: stops motion and clears pending setpoints.');

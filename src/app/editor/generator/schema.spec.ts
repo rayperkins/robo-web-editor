@@ -5,6 +5,7 @@ import { PROTOCOL_VERSION, INSTRUCTION_SIZE, INSTRUCTION_LIST_SIZE, VARIABLE_LIS
 import { CORE_STATE_FIELDS, CORE_STATE_FLAG_BITS, CORE_STATE_HEADER_BYTE_LENGTH } from './schema/state.schema';
 import { OTTO_ROBOT_SCHEMA } from './schema/robots/otto.schema';
 import { OLIBOT_ROBOT_SCHEMA } from './schema/robots/olibot.schema';
+import { BLE_SERVICE_UUID, BLE_COMMAND_WRITE_CHARACTERISTIC_UUID, BLE_RESPONSE_CHARACTERISTIC_UUID, BLE_STATE_CHARACTERISTIC_UUID } from './schema/transport.schema';
 import { validateSchema, generateSingleHeader } from '../../../../scripts/generate-firmware-header';
 
 describe('Protocol Schema and Code Generation', () => {
@@ -61,6 +62,10 @@ describe('Protocol Schema and Code Generation', () => {
         expect(header).toContain('constexpr const char* OPCODE_EXIT = "exit";');
         expect(header).toContain('constexpr const char* ROBOT_SET_HEADING = "heading";');
         expect(header).toContain('constexpr const char* ROBOT_MOVE = "move";');
+        expect(header).toContain(`constexpr const char* BLE_SERVICE_UUID = "${BLE_SERVICE_UUID}";`);
+        expect(header).toContain(`constexpr const char* BLE_COMMAND_WRITE_CHARACTERISTIC_UUID = "${BLE_COMMAND_WRITE_CHARACTERISTIC_UUID}";`);
+        expect(header).toContain(`constexpr const char* BLE_RESPONSE_CHARACTERISTIC_UUID = "${BLE_RESPONSE_CHARACTERISTIC_UUID}";`);
+        expect(header).toContain(`constexpr const char* BLE_STATE_CHARACTERISTIC_UUID = "${BLE_STATE_CHARACTERISTIC_UUID}";`);
         expect(header).not.toContain('MOTION_');
         expect(header).not.toContain('OLIBOT_SET_');
         expect(header).not.toContain('MOTION_VICTORY');

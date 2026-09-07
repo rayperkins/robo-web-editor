@@ -44,7 +44,7 @@ describe('Opcode', () => {
 
     it('rejects invalid signed operands and motion ranges', () => {
         expect(() => Opcode.use(32768)).toThrow(RangeError);
-        expect(() => Opcode.distance(-1)).toThrow(RangeError);
+        expect(Opcode.distance(-1)).toBe('distance -1');
         expect(() => Opcode.speed(101)).toThrow(RangeError);
         expect(() => Opcode.heading(361)).toThrow(RangeError);
         expect(() => Opcode.move(100)).not.toThrow();
