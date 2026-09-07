@@ -1,6 +1,10 @@
 import { Observable, Subject, Subscriber } from "rxjs";
 import { Logger } from "../logger";
-import { STATE_BYTE_LENGTH, STATE_FIELDS, STATE_FLAG_BITS } from "../editor/generator/schema/state.schema";
+import { RobotSchema } from "../editor/generator/schema/robot-types";
+import { OTTO_ROBOT_SCHEMA } from "../editor/generator/schema/robots/otto.schema";
+import { OLIBOT_ROBOT_SCHEMA } from "../editor/generator/schema/robots/olibot.schema";
+
+export type RobotTypeId = 'otto' | 'olibot';
 
 export class RobotDevice {
 
@@ -13,6 +17,22 @@ export class RobotDevice {
 
     constructor(bleDevice: BluetoothDevice) {
         this._bleDevice = bleDevice;
+    }
+
+    public get name(): string {
+        return this._bleDevice.name ?? '';
+    }
+
+    public get robotType(): RobotTypeId {
+        const name = this.name.toUpperCase();
+        if (name.startsWith('OLIB')) {
+            return 'olibot';
+        }
+        return 'otto';
+    }
+
+    public get schema(): RobotSchema {
+        return this.robotType === 'olibot' ? OLIBOT_ROBOT_SCHEMA : OTTO_ROBOT_SCHEMA;
     }
 
     public connect(): Observable<boolean> {
@@ -95,17 +115,19 @@ export class RobotDevice {
                 return;
             }
 
+            const schema = this.schema;
+
             this._gattCharacteristic
                 .readValue()
                 .then((dataView) => {
-                    if (dataView.byteLength < STATE_BYTE_LENGTH) {
-                        observer.error(`state payload too short: expected ${STATE_BYTE_LENGTH} bytes, got ${dataView.byteLength}`);
+                    if (dataView.byteLength < schema.stateByteLength) {
+                        observer.error(`state payload too short: expected ${schema.stateByteLength} bytes, got ${dataView.byteLength}`);
                         observer.complete();
                         return;
                     }
 
                     const rawFields: Record<string, number> = {};
-                    for (const field of STATE_FIELDS) {
+                    for (const field of schema.stateFields) {
                         switch (field.type) {
                             case 'u8':
                                 rawFields[field.name] = dataView.getUint8(field.offset);
@@ -122,14 +144,18 @@ export class RobotDevice {
                     const flags = rawFields['flags'] ?? 0;
                     const state: RobotDevice.State = {
                         version: rawFields['version'],
-                        programRunning: STATE_FLAG_BITS.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
-                        // calibration
+                        flags,
+                        programRunning: schema.stateFlagBits.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
+                        // Otto calibration
                         trimLeftLeg: rawFields['trimLeftLeg'],
                         trimRightLeg: rawFields['trimRightLeg'],
                         trimLeftFoot: rawFields['trimLeftFoot'],
                         trimRightFoot: rawFields['trimRightFoot'],
-                        // sensors
-                        sensorDistance: rawFields['sensorDistance']
+                        // Olibot calibration
+                        motorBias: rawFields['motorBias'],
+                        distanceCalibration: rawFields['distanceCalibration'],
+                        // Sensors
+                        sensorDistance: rawFields['sensorDistance'] ?? 0
                     };
 
                     this.state = state;
@@ -181,26 +207,7 @@ export class RobotDevice {
                 observer.error(error);
                 observer.complete();
             });
-        // setTimeout(() => this._gattCharacteristic
-        //     .writeValue(enc.encode(command))
-        //     .then(() => {
-        //         observer.next(currentIndex);
-
-        //         currentIndex ++;
-
-        //         if(currentIndex < commands.length) {
-        //             this.sendCommandInternal(observer, commands, currentIndex);
-        //         }
-        //         else {
-        //             observer.complete();
-        //         }
-        //     })
-        //     .catch(error => {
-        //         observer.error(error);
-        //         observer.complete();
-        //     }), 400);
     }
-    
 
     private disconnectIfConnected(): void {
         if (this._gattServer && this._gattServer.connected) {
@@ -210,17 +217,22 @@ export class RobotDevice {
     }
 }
 
-
 export namespace RobotDevice
 {
     export interface State {
         version: number;
+        flags?: number;
         programRunning: boolean;
-        trimLeftLeg: number;
-        trimRightLeg: number;
-        trimLeftFoot: number;
-        trimRightFoot: number;
-
+        // Otto-specific calibration
+        trimLeftLeg?: number;
+        trimRightLeg?: number;
+        trimLeftFoot?: number;
+        trimRightFoot?: number;
+        // Olibot-specific calibration
+        motorBias?: number;
+        distanceCalibration?: number;
+        // Sensors
         sensorDistance: number;
     }
 }
+

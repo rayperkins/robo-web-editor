@@ -1,0 +1,57 @@
+<h2 mat-dialog-title>Olibot Remote</h2>
+<mat-dialog-content class="fx-row fx-wrap fx-justify-center">
+  <div class="fx-flex-0-0 fx-row fx-justify-center">
+    <!-- Directional control pad -->
+    <div class="control-button-container">
+      <div></div>
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('forward 100')">
+        <mat-icon>arrow_upward</mat-icon>
+      </button>
+      <div></div>
+
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('turn -45')">
+        <mat-icon>rotate_left</mat-icon>
+      </button>
+      <button mat-mini-fab color="warn" (click)="sendCommand('stop')">
+        <mat-icon>stop</mat-icon>
+      </button>
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('turn 45')">
+        <mat-icon>rotate_right</mat-icon>
+      </button>
+
+      <div></div>
+      <button mat-mini-fab color="primary" [disabled]="isSendingCommand()" (click)="sendCommand('backward 100')">
+        <mat-icon>arrow_downward</mat-icon>
+      </button>
+      <div></div>
+    </div>
+  </div>
+
+  <div class="fx-column m-2">
+    <!-- Speed Presets Card -->
+    <mat-card appearance="outlined" class="fx-flex-0-0 mb-2">
+      <mat-card-header>
+        <mat-card-title>Speed Presets</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="action-button-container">
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 30')">30%</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 60')">60%</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('speed 100')">100%</button>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Quick Actions Card -->
+    <mat-card appearance="outlined" class="fx-flex">
+      <mat-card-header>
+        <mat-card-title>Actions</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="action-button-container">
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('victory')">Victory</button>
+        <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('stop')">Stop</button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Close</button>
+</mat-dialog-actions>

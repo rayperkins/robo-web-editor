@@ -87,15 +87,38 @@ mul #variableIndex
 
 ```
 
-Otto commands
 ```
 
-// motion
-forward
-backward
-right
-left
-speed 5
-stop
+Shared Motion commands
 ```
+// Vehicle motion (unified across robot variants, e.g. Otto, Olibot)
+forward 100       // Move forward distance in mm
+backward 100      // Move backward distance in mm
+turn 45           // Rotate relative heading in degrees (positive = right/clockwise, negative = left/counter-clockwise)
+speed 80          // Set motion speed in percent (0 - 100%)
+stop              // Stop motion immediately
+wait 1000         // Pause execution for duration in ms
+victory           // Play victory gesture/dance
+```
+
+## Robot Protocol & Firmware Header
+
+The protocol schema lives in `src/app/editor/generator/schema/`:
+- **Core Interpreter Opcodes**: Shared opcodes (`exit`, `use`, `stor`, `load`, `jmp*`, `add`, `sub`, `div`, `mul`), protocol limits (512 instruction lines, 20 bytes/line, 64 variables), and core state envelope (`CoreState`).
+- **Shared Motion Commands**: Unified vehicle-level movement commands (`forward`, `backward`, `turn`, `speed`, `stop`, `wait`, `victory`).
+- **Robot Configuration Schemas**:
+  - `OttoState`: Four-servo leg/foot trim calibration (`trimLeftLeg`, `trimRightLeg`, `trimLeftFoot`, `trimRightFoot`, `sensorDistance`).
+  - `OlibotState`: Differential-drive configuration (`motorBias`, `distanceCalibration`, `sensorDistance`).
+
+Generate the single shared C++ header for firmware via:
+```bash
+npm run generate:firmware-header
+```
+This produces `generated/robot-protocol.h`.
+Verify the header is up-to-date in CI via:
+```bash
+npm run generate:firmware-header:check
+```
+
+
 

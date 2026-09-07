@@ -97,9 +97,11 @@ export class CodeGenerator extends Blockly.Generator {
         // Math
         this.forBlock['math_number'] = this.forBlock_math_number
         // Actions
-        this.forBlock['action_stop'] = this.forBlock_action_stop
+        this.forBlock['action_stop'] = this.forBlock_action_stop;
         this.forBlock['action_backward'] = this.forBlock_action_backward;
         this.forBlock['action_forward'] = this.forBlock_action_forward;
+        this.forBlock['action_turn'] = this.forBlock_action_turn;
+        this.forBlock['action_speed'] = this.forBlock_action_speed;
         this.forBlock['action_turnleft'] = this.forBlock_action_turnleft;
         this.forBlock['action_turnright'] = this.forBlock_action_turnright;
         this.forBlock['action_victory'] = this.forBlock_action_victory;
@@ -129,30 +131,37 @@ export class CodeGenerator extends Blockly.Generator {
 
     // Motion
     forBlock_action_stop(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const codeLines = [];
-        codeLines.push(Opcode.exit());
-
-        return generator.formatInstructions(codeLines);
+        return generator.formatInstruction('stop');
     }
 
     forBlock_action_backward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`backward ${steps}`);
+        const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
+        return generator.formatInstruction(`backward ${distance}`);
     }
     
     forBlock_action_forward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`forward ${steps}`);
+        const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
+        return generator.formatInstruction(`forward ${distance}`);
+    }
+
+    forBlock_action_turn(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const degrees = block.getFieldValue('DEGREES') ?? 45;
+        return generator.formatInstruction(`turn ${degrees}`);
+    }
+
+    forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const speed = block.getFieldValue('SPEED') ?? 100;
+        return generator.formatInstruction(`speed ${speed}`);
     }
 
     forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`turnleft ${steps}`);
+        const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
+        return generator.formatInstruction(`turn -${degrees}`);
     }
 
     forBlock_action_turnright(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`turnright ${steps}`);
+        const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
+        return generator.formatInstruction(`turn ${degrees}`);
     }
 
     forBlock_action_victory(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {

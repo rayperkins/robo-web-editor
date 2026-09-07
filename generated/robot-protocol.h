@@ -9,11 +9,12 @@ namespace robot::protocol {
 
 constexpr int PROTOCOL_VERSION = 1;
 
+// Protocol buffer and list limits.
 constexpr std::size_t INSTRUCTION_SIZE = 20;
 constexpr std::size_t INSTRUCTION_LIST_SIZE = 512;
 constexpr std::size_t VARIABLE_LIST_SIZE = 64;
 
-// Program instruction opcodes.
+// Program instruction opcodes (handled by CodeInterpreter::step()).
 constexpr const char* OPCODE_EXIT = "exit";
 constexpr const char* OPCODE_USE = "use";
 constexpr const char* OPCODE_STOR = "stor";
@@ -27,23 +28,55 @@ constexpr const char* OPCODE_SUB = "sub";
 constexpr const char* OPCODE_DIV = "div";
 constexpr const char* OPCODE_MUL = "mul";
 
-// Otto motion commands (handled outside CodeInterpreter::step()).
+// Shared vehicle-level motion commands (handled outside CodeInterpreter::step()).
 constexpr const char* MOTION_FORWARD = "forward";
 constexpr const char* MOTION_BACKWARD = "backward";
-constexpr const char* MOTION_LEFT = "left";
-constexpr const char* MOTION_RIGHT = "right";
-constexpr const char* MOTION_TURNLEFT = "turnleft";
-constexpr const char* MOTION_TURNRIGHT = "turnright";
+constexpr const char* MOTION_TURN = "turn";
 constexpr const char* MOTION_SPEED = "speed";
 constexpr const char* MOTION_STOP = "stop";
-constexpr const char* MOTION_VICTORY = "victory";
 constexpr const char* MOTION_WAIT = "wait";
+constexpr const char* MOTION_VICTORY = "victory";
 
-// BLE state characteristic payload (read back from the robot).
-constexpr std::size_t STATE_BYTE_LENGTH = 10;
+// Bits within State::flags / CoreState::flags.
+constexpr std::uint8_t STATE_FLAG_PROGRAMRUNNING_BIT = 0;
+
+// Generic state characteristic header / envelope.
+constexpr std::size_t CORE_STATE_HEADER_BYTE_LENGTH = 4;
 
 #pragma pack(push, 1)
-struct State {
+struct CoreState {
+    std::uint8_t version;
+    std::uint8_t flags;
+    std::uint8_t _reserved_2[2];
+};
+#pragma pack(pop)
+static_assert(sizeof(CoreState) == CORE_STATE_HEADER_BYTE_LENGTH, "CoreState struct size must match CORE_STATE_HEADER_BYTE_LENGTH");
+
+// ---------------------------------------------------------------------------
+// Robot-specific state configurations
+// ---------------------------------------------------------------------------
+
+// Olibot (two-wheel differential-drive robot)
+constexpr std::size_t OLIBOT_STATE_BYTE_LENGTH = 10;
+
+#pragma pack(push, 1)
+struct OlibotState {
+    std::uint8_t version;
+    std::uint8_t flags;
+    std::uint8_t _reserved_2[2];
+    std::int8_t motorBias;
+    std::uint8_t _reserved_5[1];
+    std::uint16_t distanceCalibration;
+    std::uint16_t sensorDistance;
+};
+#pragma pack(pop)
+static_assert(sizeof(OlibotState) == OLIBOT_STATE_BYTE_LENGTH, "OlibotState struct size must match OLIBOT_STATE_BYTE_LENGTH");
+
+// Otto DIY (bipedal walking robot)
+constexpr std::size_t OTTO_STATE_BYTE_LENGTH = 10;
+
+#pragma pack(push, 1)
+struct OttoState {
     std::uint8_t version;
     std::uint8_t flags;
     std::uint8_t _reserved_2[2];
@@ -54,9 +87,10 @@ struct State {
     std::uint16_t sensorDistance;
 };
 #pragma pack(pop)
-static_assert(sizeof(State) == STATE_BYTE_LENGTH, "State struct size must match STATE_BYTE_LENGTH");
+static_assert(sizeof(OttoState) == OTTO_STATE_BYTE_LENGTH, "OttoState struct size must match OTTO_STATE_BYTE_LENGTH");
 
-// Bits within State::flags.
-constexpr std::uint8_t STATE_FLAG_PROGRAMRUNNING_BIT = 0;
+// Default State alias
+using State = OlibotState;
+constexpr std::size_t STATE_BYTE_LENGTH = OLIBOT_STATE_BYTE_LENGTH;
 
 }  // namespace robot::protocol
