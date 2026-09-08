@@ -1,0 +1,91 @@
+<h2 mat-dialog-title>Olibot Configuration</h2>
+<mat-dialog-content class="fx-column fx-align-center">
+  <div>
+    Distance Sensor: {{sensorDistance()}} mm
+    <button class="ml-1" mat-button (click)="refresh()" [disabled]="isDeviceBusy()">Refresh</button>
+  </div>
+
+  <!-- Olibot 140mm circular differential drive robot visualization -->
+  <svg width="240" height="200" class="fx-flex-0-0 m-2" viewBox="0 0 240 200">
+    <!-- Main circular body (140mm circular chassis) -->
+    <circle cx="120" cy="100" r="70" fill="#2d3748" stroke="#4a5568" stroke-width="3" />
+    <circle cx="120" cy="100" r="62" fill="#1a202c" stroke="#2d3748" stroke-width="2" />
+
+    <!-- Left wheel -->
+    <rect x="36" y="65" width="16" height="70" rx="4" fill="#718096" stroke="#e2e8f0" stroke-width="1.5" />
+    <!-- Right wheel -->
+    <rect x="188" y="65" width="16" height="70" rx="4" fill="#718096" stroke="#e2e8f0" stroke-width="1.5" />
+
+    <!-- Front heading indicator / Ultrasonic sensor -->
+    <circle cx="105" cy="42" r="10" fill="#4a5568" stroke="#63b3ed" stroke-width="2" />
+    <circle cx="135" cy="42" r="10" fill="#4a5568" stroke="#63b3ed" stroke-width="2" />
+    <polygon points="120,20 112,32 128,32" fill="#63b3ed" />
+
+    <!-- Robot label -->
+    <text x="120" y="115" text-anchor="middle" fill="#e2e8f0" font-size="12" font-family="sans-serif">OLIBOT</text>
+    <text x="120" y="130" text-anchor="middle" fill="#a0aec0" font-size="9" font-family="sans-serif">140mm Diff-Drive</text>
+  </svg>
+
+  <div class="fx-row fx-wrap fx-justify-center">
+    <!-- Motor Bias Card -->
+    <mat-card appearance="outlined" class="fx-flex-0-0 m-2 config-card">
+      <mat-card-header>
+        <mat-card-title>Motor Bias / Trim</mat-card-title>
+        <mat-card-subtitle>Balances left & right motor speeds</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="p-2">
+        <div class="fx-row fx-align-center fx-justify-between">
+          <span>Left Bias</span>
+          <span class="bias-value">{{motorBiasControl.value}}</span>
+          <span>Right Bias</span>
+        </div>
+        <mat-slider showTickMarks discrete class="calibrate-slider"
+            [max]="50"
+            [min]="-50"
+            [step]="1"
+            [displayWith]="formatBiasLabel">
+            <input matSliderThumb [formControl]="motorBiasControl" (valueChange)="updateBias()">
+        </mat-slider>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Distance Calibration Card -->
+    <mat-card appearance="outlined" class="fx-flex-0-0 m-2 config-card">
+      <mat-card-header>
+        <mat-card-title>Distance Calibration</mat-card-title>
+        <mat-card-subtitle>Encoder ticks / scale per mm</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="p-2">
+        <div class="fx-row fx-align-center fx-justify-between">
+          <span>Scale</span>
+          <span class="bias-value">{{distanceCalibrationControl.value}}</span>
+        </div>
+        <mat-slider showTickMarks discrete class="calibrate-slider"
+            [max]="200"
+            [min]="1"
+            [step]="1"
+            [displayWith]="formatBiasLabel">
+            <input matSliderThumb [formControl]="distanceCalibrationControl" (valueChange)="updateDistanceCalibration()">
+        </mat-slider>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Test Movement Card -->
+  <mat-card appearance="outlined" class="m-2 test-card">
+    <mat-card-header>
+      <mat-card-title>Test Movement</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="fx-row fx-wrap fx-justify-center p-2 action-buttons">
+      <button mat-stroked-button (click)="testForward()" [disabled]="isDeviceBusy()">Forward 100mm</button>
+      <button mat-stroked-button (click)="testBackward()" [disabled]="isDeviceBusy()">Backward 100mm</button>
+      <button mat-stroked-button (click)="testTurnLeft()" [disabled]="isDeviceBusy()">Turn -45°</button>
+      <button mat-stroked-button (click)="testTurnRight()" [disabled]="isDeviceBusy()">Turn 45°</button>
+      <button mat-stroked-button color="warn" (click)="testStop()" [disabled]="isDeviceBusy()">Stop</button>
+    </mat-card-content>
+  </mat-card>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Close</button>
+  <button mat-flat-button color="primary" (click)="saveCalibration()" [disabled]="isDeviceBusy()">Save</button>
+</mat-dialog-actions>

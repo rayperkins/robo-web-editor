@@ -1,15 +1,8 @@
 {
-    "files.associations": {
-        "memory": "cpp",
-        "future": "cpp",
-        "istream": "cpp",
-        "functional": "cpp",
-        "string_view": "cpp",
-        "regex": "cpp",
-        "iosfwd": "cpp",
-        "compare": "cpp",
-        "chrono": "cpp",
-        "variant": "cpp",
-        "cstring": "cpp"
+    "chat.tools.terminal.autoApprove": {
+        "npm run build": true,
+        "npm test": true,
+        "npm run generate:firmware-header": true,
+        "npm run generate:firmware-header:check": true
     }
 }

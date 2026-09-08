@@ -51,12 +51,3 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /playwright/.cache/
-
-# Cmake
-**/_deps/**
-**/CMakeFiles/**
-**/CMakeCache.txt
-**/*.cmake
-**/tests/Makefile
-**/tests/bin/**
-**/.cortex-debug.registers.state.json

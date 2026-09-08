@@ -1,6 +1,7 @@
 import * as Blockly from 'blockly';
 import { Names, Variables, } from 'blockly';
 import { Opcode } from './opcode';
+import { PROGRAM_UPLOAD_INDEX_MAX, PROGRAM_UPLOAD_INDEX_MIN, PROGRAM_UPLOAD_PREFIX } from './schema/program.schema';
 
 enum Order {
   ATOMIC = 0, 
@@ -54,7 +55,7 @@ export class CodeGenerator extends Blockly.Generator {
         return result;
     }
 
-    workspaceToSetCommands(workspace?: Blockly.Workspace): string[] {
+    workspaceToInstructions(workspace?: Blockly.Workspace): string[] {
         const result = super.workspaceToCode(workspace);
         let lines = result.split("\n");
         let outputLines = [];
@@ -74,7 +75,21 @@ export class CodeGenerator extends Blockly.Generator {
             }
         }
 
-        return outputLines;
+        return outputLines.map(line => line.replace(/^set\d+\s+/, ''));
+    }
+
+    workspaceToProgramUploadCommands(workspace?: Blockly.Workspace): string[] {
+        return this.workspaceToInstructions(workspace).map((instruction, index) => {
+            if (index < PROGRAM_UPLOAD_INDEX_MIN || index > PROGRAM_UPLOAD_INDEX_MAX) {
+                throw new RangeError(`Program instruction index must be between ${PROGRAM_UPLOAD_INDEX_MIN} and ${PROGRAM_UPLOAD_INDEX_MAX}`);
+            }
+            return `${PROGRAM_UPLOAD_PREFIX}${index} ${instruction}`;
+        });
+    }
+
+    /** @deprecated Use workspaceToProgramUploadCommands. */
+    workspaceToSetCommands(workspace?: Blockly.Workspace): string[] {
+        return this.workspaceToProgramUploadCommands(workspace);
     }
 
     scrub_(block: Blockly.Block, code: string, thisOnly?: boolean): string {
@@ -97,12 +112,13 @@ export class CodeGenerator extends Blockly.Generator {
         // Math
         this.forBlock['math_number'] = this.forBlock_math_number
         // Actions
-        this.forBlock['action_stop'] = this.forBlock_action_stop
+        this.forBlock['action_stop'] = this.forBlock_action_stop;
         this.forBlock['action_backward'] = this.forBlock_action_backward;
         this.forBlock['action_forward'] = this.forBlock_action_forward;
+        this.forBlock['action_turn'] = this.forBlock_action_turn;
+        this.forBlock['action_speed'] = this.forBlock_action_speed;
         this.forBlock['action_turnleft'] = this.forBlock_action_turnleft;
         this.forBlock['action_turnright'] = this.forBlock_action_turnright;
-        this.forBlock['action_victory'] = this.forBlock_action_victory;
         // Logic 
         this.forBlock['controls_restart'] = this.forBlock_logic_controls_restart; // TODO
         this.forBlock['controls_if_basic'] = this.forBlock_logic_controls_if_basic; // TODO
@@ -114,8 +130,8 @@ export class CodeGenerator extends Blockly.Generator {
 
     // Operations
     forBlock_action_wait(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const seconds = block.getFieldValue('SECONDS');
-        return generator.formatInstruction(`wait ${seconds * 1000}`);
+        const seconds = Number(block.getFieldValue('SECONDS'));
+        return generator.formatInstruction(Opcode.wait(seconds * 1000));
     }
 
     // Math
@@ -129,34 +145,37 @@ export class CodeGenerator extends Blockly.Generator {
 
     // Motion
     forBlock_action_stop(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const codeLines = [];
-        codeLines.push(Opcode.exit());
-
-        return generator.formatInstructions(codeLines);
+        return generator.formatInstruction(Opcode.stop());
     }
 
     forBlock_action_backward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`backward ${steps}`);
+        const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
+        return generator.formatInstruction(Opcode.distance(-Number(distance)));
     }
     
     forBlock_action_forward(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`forward ${steps}`);
+        const distance = block.getFieldValue('DISTANCE') ?? block.getFieldValue('STEPS') ?? 100;
+        return generator.formatInstruction(Opcode.distance(Number(distance)));
+    }
+
+    forBlock_action_turn(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const degrees = block.getFieldValue('DEGREES') ?? 45;
+        return generator.formatInstruction(Opcode.heading(Number(degrees)));
+    }
+
+    forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const speed = block.getFieldValue('SPEED') ?? 100;
+        return generator.formatInstruction(Opcode.move(Number(speed)));
     }
 
     forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`turnleft ${steps}`);
+        const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
+        return generator.formatInstructions([Opcode.heading(-Number(degrees)), Opcode.move(100)]);
     }
 
     forBlock_action_turnright(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        const steps = block.getFieldValue('STEPS');
-        return generator.formatInstruction(`turnright ${steps}`);
-    }
-
-    forBlock_action_victory(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
-        return generator.formatInstruction(`victory`);
+        const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
+        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(100)]);
     }
 
     forBlock_logic_controls_restart(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {

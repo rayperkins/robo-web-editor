@@ -10,14 +10,14 @@
         <mat-icon>{{!connectedDevice ? 'bluetooth' : 'bluetooth_connected'}}</mat-icon>
     </button>
     <button mat-icon-button
-        aria-label="Otto Remote"
+        aria-label="Robot Remote"
         [disabled]="!connectedDevice"
         [class.icon-connected]="connectedDevice"
         (click)="openRemoteClicked()">
         <mat-icon>settings_remote</mat-icon>
     </button>
     <button mat-icon-button 
-        aria-label="Otto Calibrate"
+        aria-label="Robot Calibrate"
         [disabled]="!connectedDevice"
         [class.icon-connected]="connectedDevice"
         (click)="openCalibrateClicked()">

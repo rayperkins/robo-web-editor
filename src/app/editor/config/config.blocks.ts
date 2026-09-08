@@ -17,72 +17,70 @@ export class EditorConfigBlocks {
             "colour": 230,
         },
 
-        // Action
+        // Actions
         {
             "type": "action_stop",
             "message0": "stop",
             "previousStatement": null,
             "nextStatement": null,
             "colour": 230,
-        },{
+        },
+        {
             "type": "action_forward",
-            "message0": "walk forward %1 steps",
+            "message0": "set forward %1 mm",
             "args0": [{
                 "type": "field_number",
-                "name": "STEPS",
-                "value": 1,
+                "name": "DISTANCE",
+                "value": 100,
                 "min": 1,
-                "max": 10,
+                "max": 32767,
                 }
             ],
             "previousStatement": null,
             "nextStatement": null,
             "colour": 230,
-        },{
+        },
+        {
             "type": "action_backward",
-            "message0": "walk backward %1 steps",
+            "message0": "set backward %1 mm",
             "args0": [{
                 "type": "field_number",
-                "name": "STEPS",
-                "value": 1,
+                "name": "DISTANCE",
+                "value": 100,
                 "min": 1,
-                "max": 10,
+                "max": 32767,
                 }
             ],
             "previousStatement": null,
             "nextStatement": null,
             "colour": 230,
-        }, {
-            "type": "action_turnleft",
-            "message0": "turn left %1 steps",
+        },
+        {
+            "type": "action_turn",
+            "message0": "turn %1 degrees",
             "args0": [{
                 "type": "field_number",
-                "name": "STEPS",
-                "value": 1,
-                "min": 1,
-                "max": 10,
+                "name": "DEGREES",
+                "value": 45,
+                "min": -360,
+                "max": 360,
                 }
             ],
             "previousStatement": null,
             "nextStatement": null,
             "colour": 230,
-        }, {
-            "type": "action_turnright",
-            "message0": "turn right %1 steps",
+        },
+        {
+            "type": "action_speed",
+            "message0": "move %1 %",
             "args0": [{
                 "type": "field_number",
-                "name": "STEPS",
-                "value": 1,
-                "min": 1,
-                "max": 10,
+                "name": "SPEED",
+                "value": 100,
+                "min": 0,
+                "max": 100,
                 }
             ],
-            "previousStatement": null,
-            "nextStatement": null,
-            "colour": 230,
-        },{
-            "type": "action_victory",
-            "message0": "victory",
             "previousStatement": null,
             "nextStatement": null,
             "colour": 230,

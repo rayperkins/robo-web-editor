@@ -22,7 +22,7 @@ export class RobotService {
             
             const options: RequestDeviceOptions = {
                 //filters: [ {services: [ottoUartServiceUuid]}],
-                filters: [ {namePrefix: 'OTTO'}],
+                filters: [ {namePrefix: 'OTTO'}, {namePrefix: 'OLIB'}],
                 //acceptAllDevices: false,
                 optionalServices: [RobotDevice.UartServiceUuid]
             };

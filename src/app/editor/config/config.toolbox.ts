@@ -8,25 +8,22 @@ export class EditorConfigToolbox {
                 "colour": 190,
                 "contents": [{
                         kind: 'block',
-                        type: 'action_wait'
+                        type: 'action_forward'
                     },{
                         kind: 'block',
                         type: 'action_backward'
                     },{
                         kind: 'block',
-                        type: 'action_forward'
+                        type: 'action_turn'
                     },{
                         kind: 'block',
-                        type: 'action_turnleft'
-                    },{
-                        kind: 'block',
-                        type: 'action_turnright'
+                        type: 'action_speed'
                     },{
                         kind: 'block',
                         type: 'action_stop'
                     },{
                         kind: 'block',
-                        type: 'action_victory'
+                        type: 'action_wait'
                     }
                 ]
             }, {

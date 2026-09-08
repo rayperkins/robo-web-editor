@@ -15,6 +15,8 @@ import { RobotDevice } from './otto/robot.device';
 import { DisconnectBluetoothDialog} from './shared/disconnect-bluetooth-dialog/disconnect-bluetooth-dialog';
 import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
 import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate-dialog';
+import { OlibotRemoteDialog } from './olibot/olibot-remote-dialog/olibot-remote-dialog';
+import { OlibotCalibrateDialog } from './olibot/olibot-calibrate-dialog/olibot-calibrate-dialog';
 
 @Component({
     selector: 'app-root',
@@ -86,33 +88,31 @@ export class AppComponent {
 
     openCalibrateClicked() {
         if(this.connectedDevice) {
-            this.dialog
-                .open(OttoCalibrateDialog, {
-                    data: this.connectedDevice
-                })
-                .afterClosed()
-                .subscribe({next: result => {
-                    if(result !== undefined) {
-                        this.connectedDevice.disconnect();
-                        this.connectedDevice = null;
-                    }
-                }});
+            const dialogRef = this.connectedDevice.robotType === 'olibot'
+                ? this.dialog.open(OlibotCalibrateDialog, { data: this.connectedDevice })
+                : this.dialog.open(OttoCalibrateDialog, { data: this.connectedDevice });
+
+            dialogRef.afterClosed().subscribe({next: result => {
+                if(result !== undefined) {
+                    this.connectedDevice.disconnect();
+                    this.connectedDevice = null;
+                }
+            }});
         }
     }
 
     openRemoteClicked() {
         if(this.connectedDevice) {
-            this.dialog
-                .open(OttoRemoteDialog, {
-                    data: this.connectedDevice
-                })
-                .afterClosed()
-                .subscribe({next: result => {
-                    if(result !== undefined) {
-                        this.connectedDevice.disconnect();
-                        this.connectedDevice = null;
-                    }
-                }});
+            const dialogRef = this.connectedDevice.robotType === 'olibot'
+                ? this.dialog.open(OlibotRemoteDialog, { data: this.connectedDevice })
+                : this.dialog.open(OttoRemoteDialog, { data: this.connectedDevice });
+
+            dialogRef.afterClosed().subscribe({next: result => {
+                if(result !== undefined) {
+                    this.connectedDevice.disconnect();
+                    this.connectedDevice = null;
+                }
+            }});
         }
     }
 }
