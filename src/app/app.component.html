@@ -9,6 +9,14 @@
         aria-label="Connect bluetooth button">
         <mat-icon>{{!connectedDevice ? 'bluetooth' : 'bluetooth_connected'}}</mat-icon>
     </button>
+    @if (hasProgramError) {
+        <button mat-icon-button
+            color="warn"
+            [attr.title]="programErrorDescription"
+            [attr.aria-label]="programErrorDescription">
+            <mat-icon>warning</mat-icon>
+        </button>
+    }
     <button mat-icon-button
         aria-label="Robot Remote"
         [disabled]="!connectedDevice"

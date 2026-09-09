@@ -36,7 +36,7 @@ describe('Opcode', () => {
     it('emits Olibot setpoint commands as single-argument instructions', () => {
         expect(Opcode.heading(45)).toBe('heading 45');
         expect(Opcode.distance(1000)).toBe('distance 1000');
-        expect(Opcode.move(100)).toBe('move 100');
+        expect(Opcode.move(1000)).toBe('move 1000');
         expect(Opcode.heading({ variableIndex: 2 })).toBe('heading #2');
         expect(Opcode.stop()).toBe('stop');
         expect(Opcode.wait(1000)).toBe('wait 1000');
@@ -47,6 +47,6 @@ describe('Opcode', () => {
         expect(Opcode.distance(-1)).toBe('distance -1');
         expect(() => Opcode.speed(101)).toThrow(RangeError);
         expect(() => Opcode.heading(361)).toThrow(RangeError);
-        expect(() => Opcode.move(100)).not.toThrow();
+        expect(() => Opcode.move(32767)).not.toThrow();
     });
 });

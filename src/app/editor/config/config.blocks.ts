@@ -72,13 +72,28 @@ export class EditorConfigBlocks {
         },
         {
             "type": "action_speed",
-            "message0": "move %1 %",
+            "message0": "speed %1 %",
             "args0": [{
                 "type": "field_number",
                 "name": "SPEED",
                 "value": 100,
                 "min": 0,
                 "max": 100,
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 230,
+        },
+        {
+            "type": "action_move",
+            "message0": "move for %1 ms",
+            "args0": [{
+                "type": "field_number",
+                "name": "TIMEOUT",
+                "value": 1000,
+                "min": 0,
+                "max": 32767,
                 }
             ],
             "previousStatement": null,

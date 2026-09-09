@@ -21,12 +21,14 @@ describe('RobotDevice.updateState', () => {
         const view = new DataView(buffer);
         view.setUint8(0, 1); // version
         view.setUint8(1, 0x01); // flags: programRunning
-        view.setInt8(4, -1); // trimLeftLeg
-        view.setInt8(5, 2); // trimRightLeg
-        view.setInt8(6, -3); // trimLeftFoot
-        view.setInt8(7, 4); // trimRightFoot
-        view.setUint8(8, 0x34); // sensorDistance low byte
-        view.setUint8(9, 0x12); // sensorDistance high byte
+        view.setUint8(2, 1); // running
+        view.setUint32(6, 0x12345678, true); // program id
+        view.setInt8(10, -1); // trimLeftLeg
+        view.setInt8(11, 2); // trimRightLeg
+        view.setInt8(12, -3); // trimLeftFoot
+        view.setInt8(13, 4); // trimRightFoot
+        view.setUint8(14, 0x34); // sensorDistance low byte
+        view.setUint8(15, 0x12); // sensorDistance high byte
 
         const device = createDevice(view, 'OTTO_01');
 
@@ -49,6 +51,7 @@ describe('RobotDevice.updateState', () => {
 
         expect(state.version).toBe(1);
         expect(state.programRunning).toBe(true);
+        expect(state.programId).toBe(0x12345678);
         expect(state.trimLeftLeg).toBe(-1);
         expect(state.trimRightLeg).toBe(2);
         expect(state.trimLeftFoot).toBe(-3);
@@ -61,11 +64,13 @@ describe('RobotDevice.updateState', () => {
         const view = new DataView(buffer);
         view.setUint8(0, 1); // version
         view.setUint8(1, 0x01); // flags: programRunning
-        view.setInt8(4, -5); // motorBias
-        view.setUint8(6, 0x64); // distanceCalibration low byte (100)
-        view.setUint8(7, 0x00); // distanceCalibration high byte
-        view.setUint8(8, 0x78); // sensorDistance low byte (120)
-        view.setUint8(9, 0x00); // sensorDistance high byte
+        view.setUint8(2, 1); // running
+        view.setUint32(6, 42, true); // program id
+        view.setInt8(10, -5); // motorBias
+        view.setUint8(12, 0x64); // distanceCalibration low byte (100)
+        view.setUint8(13, 0x00); // distanceCalibration high byte
+        view.setUint8(14, 0x78); // sensorDistance low byte (120)
+        view.setUint8(15, 0x00); // sensorDistance high byte
 
         const device = createDevice(view, 'OLIBOT_01');
 
@@ -76,6 +81,7 @@ describe('RobotDevice.updateState', () => {
         expect(device.robotType).toBe('olibot');
         expect(state.version).toBe(1);
         expect(state.programRunning).toBe(true);
+        expect(state.programId).toBe(42);
         expect(state.motorBias).toBe(-5);
         expect(state.distanceCalibration).toBe(100);
         expect(state.sensorDistance).toBe(120);

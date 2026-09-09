@@ -20,6 +20,9 @@ export class EditorConfigToolbox {
                         type: 'action_speed'
                     },{
                         kind: 'block',
+                        type: 'action_move'
+                    },{
+                        kind: 'block',
                         type: 'action_stop'
                     },{
                         kind: 'block',

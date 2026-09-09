@@ -33,7 +33,10 @@ import { OPCODES } from '../src/app/editor/generator/schema/opcodes.schema';
 import { ROBOT_MOTION_COMMANDS } from '../src/app/editor/generator/schema/motion.schema';
 import {
     CORE_STATE_HEADER_BYTE_LENGTH,
+    CORE_STATE_FIELDS,
     CORE_STATE_FLAG_BITS,
+    ProgramError,
+    ProgramState,
     StateFieldType,
 } from '../src/app/editor/generator/schema/state.schema';
 import { RobotSchema } from '../src/app/editor/generator/schema/robot-types';
@@ -73,7 +76,7 @@ export function validateSchema(): void {
         motionMnemonics.add(command.mnemonic);
     }
 
-    const fieldTypeSize: Record<StateFieldType, number> = { u8: 1, i8: 1, u16le: 2 };
+    const fieldTypeSize: Record<StateFieldType, number> = { u8: 1, i8: 1, u16le: 2, u32le: 4 };
 
     for (const robot of ALL_ROBOT_SCHEMAS) {
         let maxEnd = 0;
@@ -94,6 +97,7 @@ function cppFieldType(type: StateFieldType): string {
         case 'u8': return 'std::uint8_t';
         case 'i8': return 'std::int8_t';
         case 'u16le': return 'std::uint16_t';
+        case 'u32le': return 'std::uint32_t';
     }
 }
 
@@ -105,7 +109,7 @@ function generateStructFields(robot: RobotSchema, lines: string[]): void {
             lines.push(`    std::uint8_t _reserved_${cursor}[${field.offset - cursor}];`);
         }
         lines.push(`    ${cppFieldType(field.type)} ${field.name};`);
-        const size = field.type === 'u16le' ? 2 : 1;
+        const size = field.type === 'u32le' ? 4 : field.type === 'u16le' ? 2 : 1;
         cursor = field.offset + size;
     }
     if (cursor < robot.stateByteLength) {
@@ -133,9 +137,11 @@ export function generateSingleHeader(): string {
     lines.push(`constexpr std::size_t VARIABLE_LIST_SIZE = ${VARIABLE_LIST_SIZE};`);
     lines.push('');
     lines.push('// Program transport and lifecycle.');
+    lines.push('// set<number> <instruction>: Store an instruction in a program slot.');
     lines.push('constexpr const char* PROGRAM_UPLOAD_PREFIX = "set";');
     lines.push(`constexpr std::size_t PROGRAM_UPLOAD_INDEX_MAX = ${PROGRAM_UPLOAD_INDEX_MAX};`);
     for (const command of PROGRAM_COMMANDS) {
+        lines.push(`// ${command.mnemonic}${command.requiresArgument ? ' <argument>' : ''}: ${command.description}`);
         lines.push(`constexpr const char* PROGRAM_${command.mnemonic.toUpperCase()} = "${command.mnemonic}";`);
     }
     lines.push('');
@@ -151,6 +157,7 @@ export function generateSingleHeader(): string {
     lines.push('');
     lines.push('// Program instruction opcodes (handled by CodeInterpreter::step()).');
     for (const opcode of OPCODES) {
+        lines.push(`// ${opcode.mnemonic}: ${opcode.description}`);
         lines.push(`constexpr const char* ${opcode.constantName} = "${opcode.mnemonic}";`);
     }
     lines.push('');
@@ -158,13 +165,14 @@ export function generateSingleHeader(): string {
     lines.push('// heading: relative degrees [-360, 360], default 0.');
     lines.push('// distance: signed millimetres [-32768, 32767], default 0; negative drives in reverse.');
     lines.push('// speed: requested percent [0, 100], default 100.');
-    lines.push('// move: submits the current heading/distance setpoints; argument is speed [0, 100].');
+    lines.push('// move: submits the current heading/distance setpoints; argument is timeout in milliseconds [0, 32767].');
     lines.push('// stop: stops motion and clears pending setpoints.');
     lines.push('// wait: interpreter delay in milliseconds [0, 32767].');
     for (const command of ROBOT_MOTION_COMMANDS) {
         const constantName = `ROBOT_${command.mnemonic === 'heading' ? 'SET_HEADING' :
             command.mnemonic === 'distance' ? 'SET_DISTANCE' :
             command.mnemonic === 'speed' ? 'SET_SPEED' : command.mnemonic.toUpperCase()}`;
+        lines.push(`// ${command.mnemonic}: ${command.description ?? 'Robot motion command.'}`);
         lines.push(`constexpr const char* ${constantName} = "${command.mnemonic}";`);
     }
     lines.push('');
@@ -175,13 +183,23 @@ export function generateSingleHeader(): string {
     }
     lines.push('');
     lines.push('// Generic state characteristic header / envelope.');
+    lines.push('enum class ProgramState : std::uint8_t {');
+    lines.push(`    Stopped = ${ProgramState.Stopped},`);
+    lines.push(`    Running = ${ProgramState.Running},`);
+    lines.push(`    Completed = ${ProgramState.Completed},`);
+    lines.push(`    Error = ${ProgramState.Error},`);
+    lines.push('};');
+    lines.push('enum class ProgramError : std::uint8_t {');
+    lines.push(`    None = ${ProgramError.None},`);
+    lines.push(`    MotionTimeout = ${ProgramError.MotionTimeout},`);
+    lines.push(`    RuntimeFailure = ${ProgramError.RuntimeFailure},`);
+    lines.push('};');
+    lines.push('');
     lines.push(`constexpr std::size_t CORE_STATE_HEADER_BYTE_LENGTH = ${CORE_STATE_HEADER_BYTE_LENGTH};`);
     lines.push('');
     lines.push('#pragma pack(push, 1)');
     lines.push('struct CoreState {');
-    lines.push('    std::uint8_t version;');
-    lines.push('    std::uint8_t flags;');
-    lines.push('    std::uint8_t _reserved_2[2];');
+    generateStructFields({ stateFields: CORE_STATE_FIELDS, stateByteLength: CORE_STATE_HEADER_BYTE_LENGTH } as RobotSchema, lines);
     lines.push('};');
     lines.push('#pragma pack(pop)');
     lines.push(`static_assert(sizeof(CoreState) == CORE_STATE_HEADER_BYTE_LENGTH, "CoreState struct size must match CORE_STATE_HEADER_BYTE_LENGTH");`);

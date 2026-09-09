@@ -22,8 +22,12 @@ describe('CodeGenerator Olibot motion instructions', () => {
         );
     });
 
-    it('compiles the move block into a speed command', () => {
-        expect(generator.forBlock_action_speed(block({ SPEED: 60 }), generator)).toBe('move 60\n');
+    it('compiles the speed block into a persistent speed command', () => {
+        expect(generator.forBlock_action_speed(block({ SPEED: 60 }), generator)).toBe('speed 60\n');
+    });
+
+    it('compiles the move block into a timeout command', () => {
+        expect(generator.forBlock_action_move(block({ TIMEOUT: 2500 }), generator)).toBe('move 2500\n');
     });
 
     it('compiles turning into a heading setpoint without moving', () => {

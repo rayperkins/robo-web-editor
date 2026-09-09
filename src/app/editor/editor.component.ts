@@ -3,6 +3,7 @@
  */
 
 import {Component, input, OnInit} from '@angular/core';
+import {Subscription} from 'rxjs';
 
 import * as Blockly from 'blockly';
 import {BlocklyOptions} from 'blockly';
@@ -28,7 +29,9 @@ export class EditorComponent implements OnInit {
   // connected otto device (optional)
   connectedDevice = input<RobotDevice | null>(null); 
   codeGenerator: CodeGenerator = new CodeGenerator();
-  codeWorkspace?: Blockly.Workspace;
+  codeWorkspace?: Blockly.WorkspaceSvg;
+  private stateSubscription?: Subscription;
+  private currentRunProgramId?: number;
 
   constructor() {
 
@@ -72,11 +75,6 @@ export class EditorComponent implements OnInit {
     this.codeGenerator.setWorkspaceDefaults(this.codeWorkspace);
   }
 
-  testCodeClicked() {
-    const commands = ['clear', ...this.codeGenerator.workspaceToProgramUploadCommands(this.codeWorkspace), 'run'];
-    console.log(commands);
-  }
-
   runProgramClicked() {
     const device = this.connectedDevice();
     if (device != null) {
@@ -90,10 +88,39 @@ export class EditorComponent implements OnInit {
       //   'start'
       // ];
 
-      const commands = ['clear', ...this.codeGenerator.workspaceToProgramUploadCommands(this.codeWorkspace), 'run'];
+      const programId = CodeGenerator.createProgramId();
+      this.currentRunProgramId = programId;
+      device.currentRunProgramId = programId;
+      this.clearRobotErrors();
+      this.stateSubscription?.unsubscribe();
+      this.stateSubscription = device.stateChanges.subscribe(state => {
+        if (state.programId !== this.currentRunProgramId || state.programError === 0) {
+          return;
+        }
+
+        const block = this.codeWorkspace?.getAllBlocks(false)[state.currentInstructionIndex];
+        if (block && this.codeWorkspace) {
+          block.setWarningText(`Robot runtime error at instruction ${state.currentInstructionIndex}`, 'robot-runtime-error');
+          this.codeWorkspace.highlightBlock(block.id, true);
+        }
+      });
+      const commands = [
+        'clear',
+        ...this.codeGenerator.workspaceToProgramUploadCommands(this.codeWorkspace),
+        'save',
+        'run ' + programId,
+      ];
       //const commands = ['set0 victory', 'start'];
       console.log(commands);
-      device.sendCommands(commands);
-    }
+    device.sendCommands(commands);
   }
+}
+
+private clearRobotErrors(): void {
+  for (const block of this.codeWorkspace?.getAllBlocks(false) ?? []) {
+    block.setWarningText(null, 'robot-runtime-error');
+    this.codeWorkspace?.highlightBlock(block.id, false);
+  }
+}
+
 }

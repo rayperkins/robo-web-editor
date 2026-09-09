@@ -135,7 +135,7 @@ export class Opcode {
             heading: [-360, 360],
             distance: [-32768, INT16_MAX],
             speed: [0, 100],
-            move: [0, 100],
+            move: [0, INT16_MAX],
             wait: [0, INT16_MAX],
         };
         const range = ranges[command];

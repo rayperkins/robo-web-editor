@@ -17,6 +17,7 @@ import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
 import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate-dialog';
 import { OlibotRemoteDialog } from './olibot/olibot-remote-dialog/olibot-remote-dialog';
 import { OlibotCalibrateDialog } from './olibot/olibot-calibrate-dialog/olibot-calibrate-dialog';
+import { ProgramError } from './editor/generator/schema/state.schema';
 
 @Component({
     selector: 'app-root',
@@ -38,6 +39,7 @@ export class AppComponent {
         
     public isConnecting$ = new BehaviorSubject<boolean>(false);
     public connectedDevice?: RobotDevice;
+    readonly ProgramError = ProgramError;
 
     constructor(
         private dialog: MatDialog,
@@ -51,6 +53,26 @@ export class AppComponent {
         map(result => result.matches),
         shareReplay()
         );
+
+    get hasProgramError(): boolean {
+        const state = this.connectedDevice?.state;
+        return state?.programError !== undefined
+            && state.programError !== ProgramError.None
+            && state.programId === this.connectedDevice?.currentRunProgramId;
+    }
+
+    get programErrorDescription(): string {
+        const state = this.connectedDevice?.state;
+        if (!state || state.programError === ProgramError.None
+            || state.programId !== this.connectedDevice?.currentRunProgramId) {
+            return '';
+        }
+
+        const error = state.programError === ProgramError.MotionTimeout
+            ? 'Motion timeout'
+            : 'Runtime failure';
+        return `${error} at instruction ${state.currentInstructionIndex}`;
+    }
 
     bluetoothConnectionClicked() {
         if(this.connectedDevice) {

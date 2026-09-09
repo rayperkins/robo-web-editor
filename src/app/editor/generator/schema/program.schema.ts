@@ -12,12 +12,14 @@ export interface ProgramCommandDefinition {
 
 export const PROGRAM_COMMANDS: readonly ProgramCommandDefinition[] = [
     { mnemonic: 'clear', description: 'Clear all interpreter slots.' },
-    { mnemonic: 'run', description: 'Start executing the uploaded program.' },
+    { mnemonic: 'save', description: 'Store the uploaded program in persistent memory.' },
+    { mnemonic: 'run', description: 'Start executing the uploaded program with its 32-bit correlation identifier.', requiresArgument: true },
     { mnemonic: 'program_stop', description: 'Stop and cancel the running program.' },
 ] as const;
 
 export const PROGRAM_ARGUMENT_RULES = {
     int16: { min: INT16_MIN, max: INT16_MAX },
+    uint32: { min: 0, max: 4294967295 },
     variableIndex: { min: 0, max: 63 },
 } as const;
 

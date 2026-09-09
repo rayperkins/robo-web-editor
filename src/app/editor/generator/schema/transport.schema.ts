@@ -13,7 +13,7 @@ export const BLE_ERROR_PREFIX = 'err';
 export const BLE_REQUEST_ID_MAX = 65535;
 export const BLE_STATE_PAYLOAD_VERSION = 1;
 export const BLE_STATE_BYTE_ORDER = 'little-endian';
-export const BLE_STATE_PAYLOAD_LENGTH = 10;
+export const BLE_STATE_PAYLOAD_LENGTH = 16;
 export const BLE_COMMAND_TIMEOUT_MS = 3000;
 
 export interface BleResponse {

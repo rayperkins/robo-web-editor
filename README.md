@@ -100,7 +100,7 @@ Shared Motion commands
 heading 45        // Set relative heading target in degrees (-360..360)
 distance 1000     // Set signed travel distance target in millimetres (-32768..32767); negative drives in reverse
 speed 80          // Set requested speed in percent (0..100)
-move 100           // Submit heading/distance using this speed (0..100)
+move 1000          // Submit heading/distance with a timeout in milliseconds (0..32767)
 stop              // Stop and clear pending motion setpoints
 wait 1000         // Pause interpreter execution in milliseconds (0..32767)
 ```
@@ -123,15 +123,24 @@ read/notify `FFE3`. A command is one complete UTF-8 ASCII line terminated by
 and reject lines over 20 bytes. Commands are serialized, so the acknowledged
 write is the in-flight correlation boundary. Response payloads are
 `ack <request-id> <message>` or `err <request-id> <message>`. State payloads
-are exactly 10 bytes, version 1, little-endian, with offsets defined by the
+are exactly 16 bytes, version 1, little-endian, with offsets defined by the
 robot state schemas; JavaScript decodes fields explicitly rather than reading
 a packed C++ object.
+The state envelope includes numeric `programState` values (`Stopped=0`,
+`Running=1`, `Completed=2`, `Error=3`), numeric `programError` values
+(`None=0`, `MotionTimeout=1`, `RuntimeFailure=2`), and a zero-based
+`currentInstructionIndex`. Firmware latches runtime errors until it clears,
+resets, or starts a new run.
+The state also includes a 32-bit `programId`; `0` means no program is loaded.
+The editor sends `save` after uploading a program, then `run <id>`; firmware
+stores the program in persistent memory and starts it with the 32-bit
+correlation ID.
 
 ## Robot Protocol & Firmware Header
 
 The protocol schema lives in `src/app/editor/generator/schema/`:
 - **Core Interpreter Opcodes**: Shared opcodes (`exit`, `use`, `stor`, `load`, `jmp*`, `add`, `sub`, `div`, `mul`), protocol limits (512 instruction lines, 20 bytes/line, 64 variables), and core state envelope (`CoreState`).
-- **Generic Robot Motion Commands**: Capability commands (`heading`, `distance`, `speed`, `move`, `stop`, `wait`) shared by all robot adapters. `move` always submits the previously set heading and distance and uses its own argument as speed.
+- **Generic Robot Motion Commands**: Capability commands (`heading`, `distance`, `speed`, `move`, `stop`, `wait`) shared by all robot adapters. `speed` is persistent, while `heading` and `distance` are one-shot; `move` submits them with a timeout in milliseconds.
 - **Robot Configuration Schemas**:
   - `OttoState`: Four-servo leg/foot trim calibration (`trimLeftLeg`, `trimRightLeg`, `trimLeftFoot`, `trimRightFoot`, `sensorDistance`).
   - `OlibotState`: Differential-drive configuration (`motorBias`, `distanceCalibration`, `sensorDistance`).

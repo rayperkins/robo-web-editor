@@ -69,6 +69,11 @@ describe('Protocol Schema and Code Generation', () => {
         expect(header).not.toContain('MOTION_');
         expect(header).not.toContain('OLIBOT_SET_');
         expect(header).not.toContain('MOTION_VICTORY');
+        expect(header).toContain('enum class ProgramState');
+        expect(header).toContain('MotionTimeout = 1');
+        expect(header).toContain('std::uint32_t programId;');
+        expect(header).toContain('constexpr const char* PROGRAM_SAVE = "save";');
+        expect(header).toContain('// exit: Stop the interpreter.');
         expect(header).toContain('struct CoreState');
         expect(header).toContain('struct OlibotState');
         expect(header).toContain('std::int8_t motorBias;');

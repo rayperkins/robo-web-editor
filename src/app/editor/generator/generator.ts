@@ -83,8 +83,15 @@ export class CodeGenerator extends Blockly.Generator {
             if (index < PROGRAM_UPLOAD_INDEX_MIN || index > PROGRAM_UPLOAD_INDEX_MAX) {
                 throw new RangeError(`Program instruction index must be between ${PROGRAM_UPLOAD_INDEX_MIN} and ${PROGRAM_UPLOAD_INDEX_MAX}`);
             }
+
             return `${PROGRAM_UPLOAD_PREFIX}${index} ${instruction}`;
         });
+    }
+
+    static createProgramId(): number {
+        const bytes = new Uint32Array(1);
+        crypto.getRandomValues(bytes);
+        return bytes[0];
     }
 
     /** @deprecated Use workspaceToProgramUploadCommands. */
@@ -117,6 +124,7 @@ export class CodeGenerator extends Blockly.Generator {
         this.forBlock['action_forward'] = this.forBlock_action_forward;
         this.forBlock['action_turn'] = this.forBlock_action_turn;
         this.forBlock['action_speed'] = this.forBlock_action_speed;
+        this.forBlock['action_move'] = this.forBlock_action_move;
         this.forBlock['action_turnleft'] = this.forBlock_action_turnleft;
         this.forBlock['action_turnright'] = this.forBlock_action_turnright;
         // Logic 
@@ -165,17 +173,22 @@ export class CodeGenerator extends Blockly.Generator {
 
     forBlock_action_speed(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const speed = block.getFieldValue('SPEED') ?? 100;
-        return generator.formatInstruction(Opcode.move(Number(speed)));
+        return generator.formatInstruction(Opcode.speed(Number(speed)));
+    }
+
+    forBlock_action_move(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
+        const timeout = block.getFieldValue('TIMEOUT') ?? 1000;
+        return generator.formatInstruction(Opcode.move(Number(timeout)));
     }
 
     forBlock_action_turnleft(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
-        return generator.formatInstructions([Opcode.heading(-Number(degrees)), Opcode.move(100)]);
+        return generator.formatInstructions([Opcode.heading(-Number(degrees)), Opcode.move(1000)]);
     }
 
     forBlock_action_turnright(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {
         const degrees = block.getFieldValue('DEGREES') ?? block.getFieldValue('STEPS') ?? 45;
-        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(100)]);
+        return generator.formatInstructions([Opcode.heading(Number(degrees)), Opcode.move(1000)]);
     }
 
     forBlock_logic_controls_restart(block: Blockly.Block, generator: CodeGenerator): [string, number] | string | null {

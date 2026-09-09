@@ -9,12 +9,12 @@ describe('Stage 1 protocol contract', () => {
         expect(Opcode.heading(0)).toBe('heading 0');
         expect(Opcode.distance(100)).toBe('distance 100');
         expect(Opcode.distance(-100)).toBe('distance -100');
-        expect(Opcode.move(100)).toBe('move 100');
+        expect(Opcode.move(1000)).toBe('move 1000');
         expect(PROGRAM_UPLOAD_INDEX_MAX).toBe(511);
     });
 
     it('defines explicit program lifecycle and motion stop commands', () => {
-        expect(PROGRAM_COMMANDS.map(command => command.mnemonic)).toEqual(['clear', 'run', 'program_stop']);
+        expect(PROGRAM_COMMANDS.map(command => command.mnemonic)).toEqual(['clear', 'save', 'run', 'program_stop']);
         expect(Opcode.stop()).toBe('stop');
         expect(Opcode.motion('stop')).toBe('stop');
     });
@@ -24,6 +24,12 @@ describe('Stage 1 protocol contract', () => {
         expect(() => RobotDevice.validateCommand('move 100 20')).toThrow();
         expect(() => RobotDevice.validateCommand('heading #63')).not.toThrow();
         expect(() => RobotDevice.validateCommand('heading #64')).toThrow(RangeError);
+        expect(() => RobotDevice.validateCommand('move 32767')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('move 32768')).toThrow(RangeError);
+        expect(() => RobotDevice.validateCommand('run 4294967295')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('run 4294967296')).toThrow(RangeError);
+        expect(() => RobotDevice.validateCommand('save')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('save 1')).toThrow();
         expect(() => RobotDevice.validateCommand('set512 move 100')).toThrow(RangeError);
         expect(() => RobotDevice.validateCommand('set0 run')).toThrow();
     });

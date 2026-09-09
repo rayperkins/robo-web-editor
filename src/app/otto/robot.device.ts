@@ -15,6 +15,7 @@ import {
 import { PROGRAM_COMMANDS } from "../editor/generator/schema/program.schema";
 import { OPCODES } from "../editor/generator/schema/opcodes.schema";
 import { ROBOT_MOTION_COMMANDS } from "../editor/generator/schema/motion.schema";
+import { ProgramError, ProgramState } from "../editor/generator/schema/state.schema";
 
 export type RobotTypeId = 'otto' | 'olibot';
 
@@ -31,6 +32,8 @@ export class RobotDevice {
     private _stateCharacteristic?: BluetoothRemoteGATTCharacteristic;
 
     public state?: RobotDevice.State;
+    public currentRunProgramId?: number;
+    public readonly stateChanges = new Subject<RobotDevice.State>();
 
     constructor(bleDevice: BluetoothDevice) {
         this._bleDevice = bleDevice;
@@ -160,6 +163,12 @@ export class RobotDevice {
                             case 'u16le':
                                 rawFields[field.name] = dataView.getUint8(field.offset) | (dataView.getUint8(field.offset + 1) << 8);
                                 break;
+                            case 'u32le':
+                                rawFields[field.name] = dataView.getUint8(field.offset)
+                                    + dataView.getUint8(field.offset + 1) * 0x100
+                                    + dataView.getUint8(field.offset + 2) * 0x10000
+                                    + dataView.getUint8(field.offset + 3) * 0x1000000;
+                                break;
                         }
                     }
 
@@ -167,7 +176,12 @@ export class RobotDevice {
                     const state: RobotDevice.State = {
                         version: rawFields['version'],
                         flags,
-                        programRunning: schema.stateFlagBits.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
+                        programState: rawFields['programState'] as ProgramState,
+                        programError: rawFields['programError'] as ProgramError,
+                        currentInstructionIndex: rawFields['currentInstructionIndex'] ?? 0,
+                        programId: rawFields['programId'] ?? 0,
+                        programRunning: rawFields['programState'] === ProgramState.Running
+                            || schema.stateFlagBits.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
                         // Otto calibration
                         trimLeftLeg: rawFields['trimLeftLeg'],
                         trimRightLeg: rawFields['trimRightLeg'],
@@ -181,6 +195,7 @@ export class RobotDevice {
                     };
 
                     this.state = state;
+                    this.stateChanges.next(state);
 
                     observer.next(state);
                     observer.complete();
@@ -282,10 +297,16 @@ export class RobotDevice {
             throw new Error('Program lifecycle commands cannot be stored as instructions');
         }
         const definition = opcode ?? motion;
-        if (definition?.argKind === 'none' && instructionTokens.length !== 1) {
+        if (program?.requiresArgument && instructionTokens.length !== 2) {
+            throw new Error(`${mnemonic} requires one argument`);
+        }
+        if (program && !program.requiresArgument && instructionTokens.length !== 1) {
             throw new Error(`${mnemonic} does not accept an argument`);
         }
-        if (definition && definition.argKind !== 'none' && instructionTokens.length !== 2) {
+        if (!program?.requiresArgument && definition?.argKind === 'none' && instructionTokens.length !== 1) {
+            throw new Error(`${mnemonic} does not accept an argument`);
+        }
+        if (!program && definition && definition.argKind !== 'none' && instructionTokens.length !== 2) {
             throw new Error(`${mnemonic} requires one argument`);
         }
         if (instructionTokens.length === 2 && !/^#?-?\d+$/.test(instructionTokens[1])) {
@@ -296,6 +317,9 @@ export class RobotDevice {
             const isVariable = argument.startsWith('#');
             const value = Number(isVariable ? argument.slice(1) : argument);
             if (!Number.isInteger(value) || value < -32768 || value > 32767) {
+                if (mnemonic === 'run' && Number.isInteger(value) && value >= 0 && value <= 4294967295) {
+                    return;
+                }
                 throw new RangeError(`${mnemonic} argument must be a signed 16-bit integer`);
             }
             if (isVariable && (value < 0 || value >= 64)) {
@@ -307,8 +331,11 @@ export class RobotDevice {
             if (!isVariable && mnemonic === 'wait' && value < 0) {
                 throw new RangeError(`${mnemonic} argument must not be negative`);
             }
-            if (!isVariable && (mnemonic === 'speed' || mnemonic === 'move') && (value < 0 || value > 100)) {
+            if (!isVariable && mnemonic === 'speed' && (value < 0 || value > 100)) {
                 throw new RangeError(`${mnemonic} argument must be between 0 and 100`);
+            }
+            if (!isVariable && mnemonic === 'move' && (value < 0 || value > 32767)) {
+                throw new RangeError(`${mnemonic} timeout must be between 0 and 32767 milliseconds`);
             }
         }
         if (upload && Number(upload[1]) >= 512) {
@@ -347,6 +374,10 @@ export namespace RobotDevice
     export interface State {
         version: number;
         flags?: number;
+        programState: ProgramState;
+        programError: ProgramError;
+        currentInstructionIndex: number;
+        programId: number;
         programRunning: boolean;
         // Otto-specific calibration
         trimLeftLeg?: number;
