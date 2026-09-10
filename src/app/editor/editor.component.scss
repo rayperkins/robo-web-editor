@@ -23,3 +23,10 @@
 #editorButtons {
   margin-bottom: 8px;
 }
+
+.loadError {
+  color: var(--mat-sys-error);
+  margin-top: 8px;
+  max-width: 260px;
+  text-align: right;
+}

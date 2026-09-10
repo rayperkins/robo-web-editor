@@ -27,11 +27,12 @@ import { CodeGenerator } from './generator/generator';
 export class EditorComponent implements OnInit {
 
   // connected otto device (optional)
-  connectedDevice = input<RobotDevice | null>(null); 
+  connectedDevice = input<RobotDevice | null>(null);
   codeGenerator: CodeGenerator = new CodeGenerator();
   codeWorkspace?: Blockly.WorkspaceSvg;
   private stateSubscription?: Subscription;
   private currentRunProgramId?: number;
+  loadError?: string;
 
   constructor() {
 
@@ -121,11 +122,70 @@ export class EditorComponent implements OnInit {
   }
 }
 
-private clearRobotErrors(): void {
-  for (const block of this.codeWorkspace?.getAllBlocks(false) ?? []) {
-    block.setWarningText(null, 'robot-runtime-error');
-    this.codeWorkspace?.highlightBlock(block.id, false);
+  saveProgramClicked(): void {
+    if (!this.codeWorkspace) {
+      return;
+    }
+
+    const program = Blockly.serialization.workspaces.save(this.codeWorkspace);
+    const programBlob = new Blob([JSON.stringify(program, null, 2)], {
+      type: 'application/json',
+    });
+    const downloadUrl = URL.createObjectURL(programBlob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = 'robo-program.json';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(downloadUrl);
+      downloadLink.remove();
+    });
   }
-}
+
+  openProgramClicked(fileInput: HTMLInputElement): void {
+    fileInput.click();
+  }
+
+  loadProgramSelected(event: Event): void {
+    if (!(event.target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const fileInput = event.target;
+    const file = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!file) {
+      return;
+    }
+
+    this.loadError = undefined;
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      try {
+        if (!this.codeWorkspace || typeof reader.result !== 'string') {
+          throw new Error('The Blockly workspace is not ready.');
+        }
+
+        const program = JSON.parse(reader.result);
+        Blockly.serialization.workspaces.load(program, this.codeWorkspace);
+        this.clearRobotErrors();
+      } catch (error) {
+        console.error('Unable to load Blockly program.', error);
+        this.loadError = 'Unable to load that program. Please choose a Blockly JSON file.';
+      }
+    });
+    reader.addEventListener('error', () => {
+      this.loadError = 'Unable to read that program file.';
+    });
+    reader.readAsText(file);
+  }
+
+  private clearRobotErrors(): void {
+    for (const block of this.codeWorkspace?.getAllBlocks(false) ?? []) {
+      block.setWarningText(null, 'robot-runtime-error');
+      this.codeWorkspace?.highlightBlock(block.id, false);
+    }
+  }
 
 }

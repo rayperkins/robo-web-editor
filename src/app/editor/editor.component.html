@@ -1,6 +1,21 @@
 <div id="editorButtons">
-    <button mat-flat-button 
+    <button mat-button
+        [disabled]="!codeWorkspace"
+        (click)="saveProgramClicked()">Save</button>
+    <button mat-button
+        [disabled]="!codeWorkspace"
+        (click)="openProgramClicked(programFileInput)">Load</button>
+    <input #programFileInput
+        type="file"
+        accept=".json,application/json"
+        (change)="loadProgramSelected($event)"
+        aria-label="Load Blockly program"
+        hidden>
+    <button mat-flat-button
         [disabled]="connectedDevice() == null"
         (click)="runProgramClicked()">Run</button>
+    @if (loadError) {
+        <div class="loadError" role="alert">{{loadError}}</div>
+    }
 </div>
 <div id="blocklyDiv"></div>
