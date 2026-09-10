@@ -96,6 +96,18 @@ constexpr const char* OTTO_LEFTFOOT_TRIM = "ottoLFtrim";
 constexpr const char* OTTO_RIGHTFOOT_TRIM = "ottoRFtrim";
 // ottoHome: Move Otto servos to their zero positions plus trim offsets.
 constexpr const char* OTTO_HOME = "ottoHome";
+// ottoHappy: Play the Otto happy sound gesture.
+constexpr const char* OTTO_HAPPY = "ottoHappy";
+// ottoSuperHappy: Play the Otto super-happy sound gesture.
+constexpr const char* OTTO_SUPER_HAPPY = "ottoSuperHappy";
+// ottoSad: Play the Otto sad descending sound gesture.
+constexpr const char* OTTO_SAD = "ottoSad";
+// ottoSleeping: Play the Otto sleeping/dream sound gesture.
+constexpr const char* OTTO_SLEEPING = "ottoSleeping";
+// ottoFart: Play the Otto fart sound gesture.
+constexpr const char* OTTO_FART = "ottoFart";
+// ottoTone: Play an Otto tone in Hz for the default 500 ms; frequency range 1-32767 Hz.
+constexpr const char* OTTO_TONE = "ottoTone";
 // calibrate: Start the robot auto-calibration cycle.
 constexpr const char* CALIBRATE = "calibrate";
 // save_calibration: Persist the current robot calibration.

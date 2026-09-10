@@ -29,17 +29,14 @@
   </div>
   <mat-card appearance="outlined" class="fx-flex">
     <mat-card-content class="action-button-container">
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('happy')">Happy</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('victory')">Victory</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('sad')">Sad</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('sleeping')">Sleeping</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('confused')">Confused</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('fail')">Fail</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('fart')">Fart</button>
-      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand('wrong')">Wrong</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.happy)">Happy</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.superHappy)">Super Happy</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.sad)">Sad</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.sleeping)">Sleeping</button>
+      <button mat-stroked-button [disabled]="isSendingCommand()" (click)="sendCommand(commands.fart)">Fart</button>
     </mat-card-content>
   </mat-card>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button (click)="close()">Close</button>
-</mat-dialog-actions>
+</mat-dialog-actions>

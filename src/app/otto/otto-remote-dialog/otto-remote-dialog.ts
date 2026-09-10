@@ -10,6 +10,13 @@ import {
   MatDialogTitle,
 } from '@angular/material/dialog';
 import { RobotDevice } from '../robot.device';
+import {
+  OTTO_FART,
+  OTTO_HAPPY,
+  OTTO_SAD,
+  OTTO_SLEEPING,
+  OTTO_SUPER_HAPPY,
+} from '../../editor/generator/schema/commands.schema';
 
 @Component({
   selector: 'app-otto-remote-dialog',
@@ -27,6 +34,11 @@ export class OttoRemoteDialog {
     left: 'heading -90|move 1000',
     right: 'heading 90|move 1000',
     stop: 'stop',
+    happy: OTTO_HAPPY,
+    superHappy: OTTO_SUPER_HAPPY,
+    sad: OTTO_SAD,
+    sleeping: OTTO_SLEEPING,
+    fart: OTTO_FART,
   } as const;
 
   constructor(

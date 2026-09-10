@@ -41,6 +41,17 @@ describe('Stage 1 protocol contract', () => {
         expect(() => RobotDevice.validateCommand('name ABC 1')).toThrow();
     });
 
+    it('validates Otto sound commands and tone frequencies', () => {
+        for (const command of ['ottoHappy', 'ottoSuperHappy', 'ottoSad', 'ottoSleeping', 'ottoFart']) {
+            expect(() => RobotDevice.validateCommand(command)).not.toThrow();
+            expect(() => RobotDevice.validateCommand(`${command} 1`)).toThrow();
+        }
+        expect(() => RobotDevice.validateCommand('ottoTone 1')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('ottoTone 32767')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('ottoTone 0')).toThrow(RangeError);
+        expect(() => RobotDevice.validateCommand('ottoTone 32768')).toThrow(RangeError);
+    });
+
     it('parses correlated acknowledgement and error responses', () => {
         expect(parseBleResponse('ack 7 accepted')).toEqual({ kind: 'ack', requestId: 7, message: 'accepted' });
         expect(parseBleResponse('err 8 unsupported')).toEqual({ kind: 'error', requestId: 8, message: 'unsupported' });

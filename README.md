@@ -122,6 +122,16 @@ BLE filters. The calibration/configuration dialog validates suffixes as exactly
 three ASCII letters or digits. This command contract must be implemented in the
 paired firmware repository as well.
 
+Otto sound commands include:
+```text
+ottoHappy           // Happy sound gesture
+ottoSuperHappy      // Super-happy sound gesture
+ottoSad             // Sad descending sound gesture
+ottoSleeping        // Sleeping/dream sound gesture
+ottoFart            // Fart sound gesture
+ottoTone 440        // Play a frequency in Hz for the default 500 ms (1-32767)
+```
+
 ### Stage 1 BLE transport
 
 The authoritative transport constants are in
