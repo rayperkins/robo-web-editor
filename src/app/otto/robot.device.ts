@@ -38,9 +38,13 @@ export class RobotDevice {
     public state?: RobotDevice.State;
     public currentRunProgramId?: number;
     public readonly stateChanges = new Subject<RobotDevice.State>();
+    public readonly disconnected = new Subject<void>();
 
     constructor(bleDevice: BluetoothDevice) {
         this._bleDevice = bleDevice;
+        if (typeof this._bleDevice.addEventListener === 'function') {
+            this._bleDevice.addEventListener('gattserverdisconnected', this.onDisconnected);
+        }
     }
 
     public get name(): string {
@@ -405,11 +409,25 @@ export class RobotDevice {
         });
     };
 
+    private readonly onDisconnected = (): void => {
+        Logger.log('BLE device disconnected', this._bleDevice);
+        this.clearConnection();
+        this.disconnected.next();
+    };
+
     private disconnectIfConnected(): void {
         if (this._gattServer && this._gattServer.connected) {
             this._gattServer.disconnect();
-            this._gattServer = undefined;
         }
+        this.clearConnection();
+    }
+
+    private clearConnection(): void {
+        this._gattServer = undefined;
+        this._gattCharacteristic = undefined;
+        this._responseCharacteristic = undefined;
+        this._stateCharacteristic = undefined;
+        this._calibrationCharacteristic = undefined;
     }
 }
 

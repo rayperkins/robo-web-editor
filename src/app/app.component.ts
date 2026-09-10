@@ -7,7 +7,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { EditorComponent } from './editor/editor.component';
 import { RobotService } from './otto/robot.service';
@@ -39,6 +39,7 @@ export class AppComponent {
         
     public isConnecting$ = new BehaviorSubject<boolean>(false);
     public connectedDevice?: RobotDevice;
+    private disconnectSubscription?: Subscription;
 
     constructor(
         private dialog: MatDialog,
@@ -77,7 +78,7 @@ export class AppComponent {
                 .subscribe({next: result => {
                     if(result !== undefined) {
                         this.connectedDevice.disconnect();
-                        this.connectedDevice = null;
+                        this.clearConnectedDevice();
                     }
                 }});
         }
@@ -91,6 +92,11 @@ export class AppComponent {
                         console.log('connected!!!');
 
                         this.connectedDevice = device;
+                        this.disconnectSubscription = device.disconnected.subscribe(() => {
+                            if (this.connectedDevice === device) {
+                                this.clearConnectedDevice();
+                            }
+                        });
 
                         this.connectedDevice.updateState().subscribe({
 
@@ -122,9 +128,15 @@ export class AppComponent {
             dialogRef.afterClosed().subscribe({next: result => {
                 if(result !== undefined) {
                     this.connectedDevice.disconnect();
-                    this.connectedDevice = null;
+                    this.clearConnectedDevice();
                 }
             }});
         }
+    }
+
+    private clearConnectedDevice(): void {
+        this.disconnectSubscription?.unsubscribe();
+        this.disconnectSubscription = undefined;
+        this.connectedDevice = undefined;
     }
 }

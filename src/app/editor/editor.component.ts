@@ -73,6 +73,11 @@ export class EditorComponent implements OnInit {
     } as BlocklyOptions);
 
     this.codeGenerator.setWorkspaceDefaults(this.codeWorkspace);
+    requestAnimationFrame(() => {
+      if (this.codeWorkspace) {
+        Blockly.svgResize(this.codeWorkspace);
+      }
+    });
   }
 
   runProgramClicked() {
