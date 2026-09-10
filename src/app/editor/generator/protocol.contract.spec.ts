@@ -34,6 +34,13 @@ describe('Stage 1 protocol contract', () => {
         expect(() => RobotDevice.validateCommand('set0 run')).toThrow();
     });
 
+    it('accepts only three-character alphanumeric robot name suffixes', () => {
+        expect(() => RobotDevice.validateCommand('name A1Z')).not.toThrow();
+        expect(() => RobotDevice.validateCommand('name AB')).toThrow();
+        expect(() => RobotDevice.validateCommand('name ABC_')).toThrow();
+        expect(() => RobotDevice.validateCommand('name ABC 1')).toThrow();
+    });
+
     it('parses correlated acknowledgement and error responses', () => {
         expect(parseBleResponse('ack 7 accepted')).toEqual({ kind: 'ack', requestId: 7, message: 'accepted' });
         expect(parseBleResponse('err 8 unsupported')).toEqual({ kind: 'error', requestId: 8, message: 'unsupported' });

@@ -17,7 +17,7 @@ import { OttoRemoteDialog } from './otto/otto-remote-dialog/otto-remote-dialog';
 import { OttoCalibrateDialog } from './otto/otto-calibrate-dialog/otto-calibrate-dialog';
 import { OlibotRemoteDialog } from './olibot/olibot-remote-dialog/olibot-remote-dialog';
 import { OlibotCalibrateDialog } from './olibot/olibot-calibrate-dialog/olibot-calibrate-dialog';
-import { ProgramError } from './editor/generator/schema/state.schema';
+import { RobotStatus } from './editor/generator/schema/state.schema';
 
 @Component({
     selector: 'app-root',
@@ -39,7 +39,6 @@ export class AppComponent {
         
     public isConnecting$ = new BehaviorSubject<boolean>(false);
     public connectedDevice?: RobotDevice;
-    readonly ProgramError = ProgramError;
 
     constructor(
         private dialog: MatDialog,
@@ -56,22 +55,18 @@ export class AppComponent {
 
     get hasProgramError(): boolean {
         const state = this.connectedDevice?.state;
-        return state?.programError !== undefined
-            && state.programError !== ProgramError.None
+        return state?.robotStatus === RobotStatus.ProgramError
             && state.programId === this.connectedDevice?.currentRunProgramId;
     }
 
     get programErrorDescription(): string {
         const state = this.connectedDevice?.state;
-        if (!state || state.programError === ProgramError.None
+        if (!state || state.robotStatus !== RobotStatus.ProgramError
             || state.programId !== this.connectedDevice?.currentRunProgramId) {
             return '';
         }
 
-        const error = state.programError === ProgramError.MotionTimeout
-            ? 'Motion timeout'
-            : 'Runtime failure';
-        return `${error} at instruction ${state.currentInstructionIndex}`;
+        return `Robot program error at instruction ${state.currentStep}`;
     }
 
     bluetoothConnectionClicked() {
@@ -114,12 +109,7 @@ export class AppComponent {
                 ? this.dialog.open(OlibotCalibrateDialog, { data: this.connectedDevice })
                 : this.dialog.open(OttoCalibrateDialog, { data: this.connectedDevice });
 
-            dialogRef.afterClosed().subscribe({next: result => {
-                if(result !== undefined) {
-                    this.connectedDevice.disconnect();
-                    this.connectedDevice = null;
-                }
-            }});
+            dialogRef.afterClosed().subscribe();
         }
     }
 

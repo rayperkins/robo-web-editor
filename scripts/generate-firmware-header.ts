@@ -26,6 +26,7 @@ import {
     BLE_RESPONSE_CHARACTERISTIC_UUID,
     BLE_SERVICE_UUID,
     BLE_STATE_CHARACTERISTIC_UUID,
+    BLE_CALIBRATION_CHARACTERISTIC_UUID,
     BLE_STATE_PAYLOAD_LENGTH,
     BLE_COMMAND_WRITE_WITH_RESPONSE,
 } from '../src/app/editor/generator/schema/transport.schema';
@@ -34,11 +35,11 @@ import { ROBOT_MOTION_COMMANDS } from '../src/app/editor/generator/schema/motion
 import {
     CORE_STATE_HEADER_BYTE_LENGTH,
     CORE_STATE_FIELDS,
-    CORE_STATE_FLAG_BITS,
-    ProgramError,
-    ProgramState,
+    RobotStatus,
+    RobotType,
     StateFieldType,
 } from '../src/app/editor/generator/schema/state.schema';
+import { ROBOT_COMMANDS } from '../src/app/editor/generator/schema/commands.schema';
 import { RobotSchema } from '../src/app/editor/generator/schema/robot-types';
 import { OTTO_ROBOT_SCHEMA } from '../src/app/editor/generator/schema/robots/otto.schema';
 import { OLIBOT_ROBOT_SCHEMA } from '../src/app/editor/generator/schema/robots/olibot.schema';
@@ -150,6 +151,7 @@ export function generateSingleHeader(): string {
     lines.push(`constexpr const char* BLE_COMMAND_WRITE_CHARACTERISTIC_UUID = "${BLE_COMMAND_WRITE_CHARACTERISTIC_UUID}";`);
     lines.push(`constexpr const char* BLE_RESPONSE_CHARACTERISTIC_UUID = "${BLE_RESPONSE_CHARACTERISTIC_UUID}";`);
     lines.push(`constexpr const char* BLE_STATE_CHARACTERISTIC_UUID = "${BLE_STATE_CHARACTERISTIC_UUID}";`);
+    lines.push(`constexpr const char* BLE_CALIBRATION_CHARACTERISTIC_UUID = "${BLE_CALIBRATION_CHARACTERISTIC_UUID}";`);
     lines.push(`constexpr bool BLE_COMMAND_WRITE_WITH_RESPONSE = ${BLE_COMMAND_WRITE_WITH_RESPONSE ? 'true' : 'false'};`);
     lines.push(`constexpr std::size_t BLE_COMMAND_MAX_PAYLOAD_BYTES = ${BLE_COMMAND_MAX_PAYLOAD_BYTES};`);
     lines.push(`constexpr char BLE_COMMAND_TERMINATOR = '${BLE_COMMAND_TERMINATOR === '\n' ? '\\n' : BLE_COMMAND_TERMINATOR}';`);
@@ -176,61 +178,56 @@ export function generateSingleHeader(): string {
         lines.push(`constexpr const char* ${constantName} = "${command.mnemonic}";`);
     }
     lines.push('');
-    lines.push('// Bits within State::flags / CoreState::flags.');
-    for (const flag of CORE_STATE_FLAG_BITS) {
-        const constantName = `STATE_FLAG_${flag.name.toUpperCase()}_BIT`;
-        lines.push(`constexpr std::uint8_t ${constantName} = ${flag.bit};`);
+    lines.push('// Robot-specific commands.');
+    for (const command of ROBOT_COMMANDS) {
+        lines.push(`// ${command.mnemonic}: ${command.description}`);
+        lines.push(`constexpr const char* ${command.constantName} = "${command.mnemonic}";`);
     }
     lines.push('');
     lines.push('// Generic state characteristic header / envelope.');
-    lines.push('enum class ProgramState : std::uint8_t {');
-    lines.push(`    Stopped = ${ProgramState.Stopped},`);
-    lines.push(`    Running = ${ProgramState.Running},`);
-    lines.push(`    Completed = ${ProgramState.Completed},`);
-    lines.push(`    Error = ${ProgramState.Error},`);
+    lines.push('enum class RobotType : std::uint8_t {');
+    lines.push(`    Otto = ${RobotType.Otto},`);
+    lines.push(`    Olibot = ${RobotType.Olibot},`);
     lines.push('};');
-    lines.push('enum class ProgramError : std::uint8_t {');
-    lines.push(`    None = ${ProgramError.None},`);
-    lines.push(`    MotionTimeout = ${ProgramError.MotionTimeout},`);
-    lines.push(`    RuntimeFailure = ${ProgramError.RuntimeFailure},`);
+    lines.push('enum class RobotStatus : std::uint8_t {');
+    lines.push(`    Ready = ${RobotStatus.Ready},`);
+    lines.push(`    ProgramRunning = ${RobotStatus.ProgramRunning},`);
+    lines.push(`    ProgramError = ${RobotStatus.ProgramError},`);
+    lines.push(`    CalibrationRunning = ${RobotStatus.CalibrationRunning},`);
     lines.push('};');
     lines.push('');
-    lines.push(`constexpr std::size_t CORE_STATE_HEADER_BYTE_LENGTH = ${CORE_STATE_HEADER_BYTE_LENGTH};`);
+    lines.push(`constexpr std::size_t STATE_BYTE_LENGTH = ${CORE_STATE_HEADER_BYTE_LENGTH};`);
     lines.push('');
     lines.push('#pragma pack(push, 1)');
-    lines.push('struct CoreState {');
+    lines.push('struct RobotState {');
     generateStructFields({ stateFields: CORE_STATE_FIELDS, stateByteLength: CORE_STATE_HEADER_BYTE_LENGTH } as RobotSchema, lines);
     lines.push('};');
     lines.push('#pragma pack(pop)');
-    lines.push(`static_assert(sizeof(CoreState) == CORE_STATE_HEADER_BYTE_LENGTH, "CoreState struct size must match CORE_STATE_HEADER_BYTE_LENGTH");`);
+    lines.push(`static_assert(sizeof(RobotState) == STATE_BYTE_LENGTH, "RobotState struct size must match STATE_BYTE_LENGTH");`);
     lines.push('');
     lines.push('// ---------------------------------------------------------------------------');
-    lines.push('// Robot-specific state configurations');
+    lines.push('// Robot-specific calibration payloads');
     lines.push('// ---------------------------------------------------------------------------');
     lines.push('');
     lines.push('// Olibot (two-wheel differential-drive robot)');
-    lines.push(`constexpr std::size_t OLIBOT_STATE_BYTE_LENGTH = ${OLIBOT_ROBOT_SCHEMA.stateByteLength};`);
+    lines.push(`constexpr std::size_t OLIBOT_CALIBRATION_BYTE_LENGTH = ${OLIBOT_ROBOT_SCHEMA.calibrationByteLength};`);
     lines.push('');
     lines.push('#pragma pack(push, 1)');
-    lines.push('struct OlibotState {');
-    generateStructFields(OLIBOT_ROBOT_SCHEMA, lines);
+    lines.push('struct OlibotCalibration {');
+    generateStructFields({ stateFields: OLIBOT_ROBOT_SCHEMA.calibrationFields, stateByteLength: OLIBOT_ROBOT_SCHEMA.calibrationByteLength } as RobotSchema, lines);
     lines.push('};');
     lines.push('#pragma pack(pop)');
-    lines.push(`static_assert(sizeof(OlibotState) == OLIBOT_STATE_BYTE_LENGTH, "OlibotState struct size must match OLIBOT_STATE_BYTE_LENGTH");`);
+    lines.push(`static_assert(sizeof(OlibotCalibration) == OLIBOT_CALIBRATION_BYTE_LENGTH, "OlibotCalibration struct size must match OLIBOT_CALIBRATION_BYTE_LENGTH");`);
     lines.push('');
     lines.push('// Otto DIY (bipedal walking robot)');
-    lines.push(`constexpr std::size_t OTTO_STATE_BYTE_LENGTH = ${OTTO_ROBOT_SCHEMA.stateByteLength};`);
+    lines.push(`constexpr std::size_t OTTO_CALIBRATION_BYTE_LENGTH = ${OTTO_ROBOT_SCHEMA.calibrationByteLength};`);
     lines.push('');
     lines.push('#pragma pack(push, 1)');
-    lines.push('struct OttoState {');
-    generateStructFields(OTTO_ROBOT_SCHEMA, lines);
+    lines.push('struct OttoCalibration {');
+    generateStructFields({ stateFields: OTTO_ROBOT_SCHEMA.calibrationFields, stateByteLength: OTTO_ROBOT_SCHEMA.calibrationByteLength } as RobotSchema, lines);
     lines.push('};');
     lines.push('#pragma pack(pop)');
-    lines.push(`static_assert(sizeof(OttoState) == OTTO_STATE_BYTE_LENGTH, "OttoState struct size must match OTTO_STATE_BYTE_LENGTH");`);
-    lines.push('');
-    lines.push('// Default State alias');
-    lines.push('using State = OlibotState;');
-    lines.push('constexpr std::size_t STATE_BYTE_LENGTH = OLIBOT_STATE_BYTE_LENGTH;');
+    lines.push(`static_assert(sizeof(OttoCalibration) == OTTO_CALIBRATION_BYTE_LENGTH, "OttoCalibration struct size must match OTTO_CALIBRATION_BYTE_LENGTH");`);
     lines.push('');
     lines.push('}  // namespace robot::protocol');
     lines.push('');

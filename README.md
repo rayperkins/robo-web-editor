@@ -111,6 +111,17 @@ setpoints (`heading`, `distance`, and `speed`) only update pending values and
 instructions, including motion arguments, but not for direct user-entered
 transport commands unless the referenced variable exists in the interpreter.
 
+Robot configuration commands include:
+```text
+name ABC            // Set the robot's three-character name suffix
+save_calibration    // Persist the current configuration
+```
+The firmware keeps its known robot-family prefix (for example, `OTTO`) and
+applies the suffix, so names remain discoverable by the editor's `namePrefix`
+BLE filters. The calibration/configuration dialog validates suffixes as exactly
+three ASCII letters or digits. This command contract must be implemented in the
+paired firmware repository as well.
+
 ### Stage 1 BLE transport
 
 The authoritative transport constants are in
@@ -123,13 +134,16 @@ read/notify `FFE3`. A command is one complete UTF-8 ASCII line terminated by
 and reject lines over 20 bytes. Commands are serialized, so the acknowledged
 write is the in-flight correlation boundary. Response payloads are
 `ack <request-id> <message>` or `err <request-id> <message>`. State payloads
-are exactly 16 bytes, version 1, little-endian, with offsets defined by the
+are exactly 9 bytes, version 1, little-endian, with offsets defined by the
 robot state schemas; JavaScript decodes fields explicitly rather than reading
-a packed C++ object.
-The state envelope includes numeric `programState` values (`Stopped=0`,
-`Running=1`, `Completed=2`, `Error=3`), numeric `programError` values
-(`None=0`, `MotionTimeout=1`, `RuntimeFailure=2`), and a zero-based
-`currentInstructionIndex`. Firmware latches runtime errors until it clears,
+a packed C++ object. Calibration uses a separate six-byte `FFE4`
+characteristic payload.
+The state envelope contains `version`, `type`, `robotStatus`, `currentStep`,
+and `programId`. `currentStep` is the current program instruction index while
+`robotStatus` is `ProgramRunning` or `ProgramError`; during calibration it
+reports calibration progress. `robotStatus` values are
+`Ready=0`, `ProgramRunning=1`, `ProgramError=2`, and
+`CalibrationRunning=3`. Firmware latches program errors until it clears,
 resets, or starts a new run.
 The state also includes a 32-bit `programId`; `0` means no program is loaded.
 The editor sends `save` after uploading a program, then `run <id>`; firmware
@@ -139,18 +153,18 @@ correlation ID.
 ## Robot Protocol & Firmware Header
 
 The protocol schema lives in `src/app/editor/generator/schema/`:
-- **Core Interpreter Opcodes**: Shared opcodes (`exit`, `use`, `stor`, `load`, `jmp*`, `add`, `sub`, `div`, `mul`), protocol limits (512 instruction lines, 20 bytes/line, 64 variables), and core state envelope (`CoreState`).
+- **Core Interpreter Opcodes**: Shared opcodes (`exit`, `use`, `stor`, `load`, `jmp*`, `add`, `sub`, `div`, `mul`), protocol limits (512 instruction lines, 20 bytes/line, 64 variables), and shared robot state envelope (`RobotState`).
 - **Generic Robot Motion Commands**: Capability commands (`heading`, `distance`, `speed`, `move`, `stop`, `wait`) shared by all robot adapters. `speed` is persistent, while `heading` and `distance` are one-shot; `move` submits them with a timeout in milliseconds.
 - **Robot Configuration Schemas**:
-  - `OttoState`: Four-servo leg/foot trim calibration (`trimLeftLeg`, `trimRightLeg`, `trimLeftFoot`, `trimRightFoot`, `sensorDistance`).
-  - `OlibotState`: Differential-drive configuration (`motorBias`, `distanceCalibration`, `sensorDistance`).
+  - `RobotState`: The nine-byte robot status envelope shared by all robot variants.
+  - `OttoCalibration`/`OlibotCalibration`: Robot-specific calibration payloads.
 
 Generate the single shared C++ header for firmware via:
 ```bash
 npm run generate:firmware-header
 ```
 This produces `generated/robot-protocol.h`.
-The generated header is the protocol contract for the paired firmware repository; copy it there and update the firmware motion adapter when these commands change.
+The generated header is the protocol contract for the paired firmware repository; copy it there and update the firmware motion adapter and BLE characteristic setup when these commands or payloads change. The paired firmware repository will also need updating for this protocol change.
 Verify the header is up-to-date in CI via:
 ```bash
 npm run generate:firmware-header:check

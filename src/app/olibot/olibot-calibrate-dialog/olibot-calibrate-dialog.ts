@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, Inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
@@ -12,6 +14,7 @@ import {
   MatDialogTitle,
 } from '@angular/material/dialog';
 import { RobotDevice } from '../../otto/robot.device';
+import { ROBOT_NAME_SUFFIX, SAVE_CALIBRATION } from '../../editor/generator/schema/commands.schema';
 
 @Component({
   selector: 'app-olibot-calibrate-dialog',
@@ -24,6 +27,8 @@ import { RobotDevice } from '../../otto/robot.device';
     MatSliderModule,
     MatDialogContent,
     MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './olibot-calibrate-dialog.html',
   styleUrl: './olibot-calibrate-dialog.scss',
@@ -36,6 +41,7 @@ export class OlibotCalibrateDialog {
 
   readonly motorBiasControl: FormControl<number>;
   readonly distanceCalibrationControl: FormControl<number>;
+  readonly nameSuffixControl: FormControl<string>;
 
   constructor(
     private dialogRef: MatDialogRef<OlibotCalibrateDialog>,
@@ -47,6 +53,10 @@ export class OlibotCalibrateDialog {
       connectedDevice.state?.distanceCalibration ?? 100,
       { nonNullable: true }
     );
+    this.nameSuffixControl = new FormControl<string>(this.getNameSuffix(), {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/^[A-Z0-9]{3}$/)],
+    });
   }
 
   close() {
@@ -105,14 +115,30 @@ export class OlibotCalibrateDialog {
   }
 
   saveCalibration(): void {
+    const suffix = this.nameSuffixControl.value.toUpperCase();
+    this.nameSuffixControl.setValue(suffix);
+    if (this.nameSuffixControl.invalid) {
+      this.nameSuffixControl.markAsTouched();
+      return;
+    }
     this.isDeviceBusy.set(true);
-    this.connectedDevice.sendCommand('save_calibration').subscribe({
-      next: () => {
+    this.connectedDevice.sendCommands([`${ROBOT_NAME_SUFFIX} ${suffix}`, SAVE_CALIBRATION]).subscribe({
+      complete: () => {
         this.isDeviceBusy.set(false);
         this.dialogRef.close(true);
       },
       error: () => this.isDeviceBusy.set(false),
     });
+  }
+
+  normalizeNameSuffix() {
+    this.nameSuffixControl.setValue(this.nameSuffixControl.value.toUpperCase(), { emitEvent: false });
+  }
+
+  private getNameSuffix(): string {
+    const prefix = this.connectedDevice.robotType === 'olibot' ? 'OLIB' : 'OTTO';
+    const suffix = this.connectedDevice.name.toUpperCase().slice(prefix.length).replace(/^[^A-Z0-9]+/, '');
+    return suffix.slice(0, 3);
   }
 
   sendCommand(command: string) {

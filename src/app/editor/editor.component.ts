@@ -94,13 +94,13 @@ export class EditorComponent implements OnInit {
       this.clearRobotErrors();
       this.stateSubscription?.unsubscribe();
       this.stateSubscription = device.stateChanges.subscribe(state => {
-        if (state.programId !== this.currentRunProgramId || state.programError === 0) {
+        if (state.programId !== this.currentRunProgramId || state.robotStatus !== 2) {
           return;
         }
 
-        const block = this.codeWorkspace?.getAllBlocks(false)[state.currentInstructionIndex];
+        const block = this.codeWorkspace?.getAllBlocks(false)[state.currentStep];
         if (block && this.codeWorkspace) {
-          block.setWarningText(`Robot runtime error at instruction ${state.currentInstructionIndex}`, 'robot-runtime-error');
+          block.setWarningText(`Robot runtime error at instruction ${state.currentStep}`, 'robot-runtime-error');
           this.codeWorkspace.highlightBlock(block.id, true);
         }
       });

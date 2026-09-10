@@ -5,23 +5,23 @@
     <div class="control-button-container">
       <!-- top row -->
       <div></div>
-      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('forward 2')">
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand(commands.forward)">
         <mat-icon>arrow_upward</mat-icon>
       </button>
       <div></div>
       <!-- middle row -->
-      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('right 2')">
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand(commands.left)">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <button mat-mini-fab (click)="sendCommand('stop')">
+      <button mat-mini-fab (click)="sendCommand(commands.stop)">
         <mat-icon>pause</mat-icon>
       </button>
-      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('left 2')">
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand(commands.right)">
         <mat-icon>arrow_forward</mat-icon>
       </button>
       <!-- bottom row -->
       <div></div>
-      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand('backward 2')">
+      <button mat-mini-fab [disabled]="isSendingCommand()" (click)="sendCommand(commands.backward)">
         <mat-icon>arrow_downward</mat-icon>
       </button>
       <div></div>

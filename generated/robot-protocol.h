@@ -33,10 +33,11 @@ constexpr const char* BLE_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
 constexpr const char* BLE_COMMAND_WRITE_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 constexpr const char* BLE_RESPONSE_CHARACTERISTIC_UUID = "0000ffe2-0000-1000-8000-00805f9b34fb";
 constexpr const char* BLE_STATE_CHARACTERISTIC_UUID = "0000ffe3-0000-1000-8000-00805f9b34fb";
+constexpr const char* BLE_CALIBRATION_CHARACTERISTIC_UUID = "0000ffe4-0000-1000-8000-00805f9b34fb";
 constexpr bool BLE_COMMAND_WRITE_WITH_RESPONSE = true;
 constexpr std::size_t BLE_COMMAND_MAX_PAYLOAD_BYTES = 20;
 constexpr char BLE_COMMAND_TERMINATOR = '\n';
-constexpr std::size_t BLE_STATE_PAYLOAD_LENGTH = 16;
+constexpr std::size_t BLE_STATE_PAYLOAD_LENGTH = 9;
 
 // Program instruction opcodes (handled by CodeInterpreter::step()).
 // exit: Stop the interpreter.
@@ -84,70 +85,71 @@ constexpr const char* ROBOT_STOP = "stop";
 // wait: Wait in the interpreter without issuing a movement command; duration is milliseconds.
 constexpr const char* ROBOT_WAIT = "wait";
 
-// Bits within State::flags / CoreState::flags.
-constexpr std::uint8_t STATE_FLAG_PROGRAMRUNNING_BIT = 0;
+// Robot-specific commands.
+// ottoLLtrim: Set the Otto left leg trim.
+constexpr const char* OTTO_LEFTLEG_TRIM = "ottoLLtrim";
+// ottoRLtrim: Set the Otto right leg trim.
+constexpr const char* OTTO_RIGHTLEG_TRIM = "ottoRLtrim";
+// ottoLFtrim: Set the Otto left foot trim.
+constexpr const char* OTTO_LEFTFOOT_TRIM = "ottoLFtrim";
+// ottoRFtrim: Set the Otto right foot trim.
+constexpr const char* OTTO_RIGHTFOOT_TRIM = "ottoRFtrim";
+// ottoHome: Move Otto servos to their zero positions plus trim offsets.
+constexpr const char* OTTO_HOME = "ottoHome";
+// calibrate: Start the robot auto-calibration cycle.
+constexpr const char* CALIBRATE = "calibrate";
+// save_calibration: Persist the current robot calibration.
+constexpr const char* SAVE_CALIBRATION = "save_calibration";
+// name: Set the three-character robot name suffix.
+constexpr const char* ROBOT_NAME_SUFFIX = "name";
 
 // Generic state characteristic header / envelope.
-enum class ProgramState : std::uint8_t {
-    Stopped = 0,
-    Running = 1,
-    Completed = 2,
-    Error = 3,
+enum class RobotType : std::uint8_t {
+    Otto = 0,
+    Olibot = 1,
 };
-enum class ProgramError : std::uint8_t {
-    None = 0,
-    MotionTimeout = 1,
-    RuntimeFailure = 2,
+enum class RobotStatus : std::uint8_t {
+    Ready = 0,
+    ProgramRunning = 1,
+    ProgramError = 2,
+    CalibrationRunning = 3,
 };
 
-constexpr std::size_t CORE_STATE_HEADER_BYTE_LENGTH = 10;
+constexpr std::size_t STATE_BYTE_LENGTH = 9;
 
 #pragma pack(push, 1)
-struct CoreState {
+struct RobotState {
     std::uint8_t version;
-    std::uint8_t flags;
-    std::uint8_t programState;
-    std::uint8_t programError;
-    std::uint16_t currentInstructionIndex;
+    std::uint8_t type;
+    std::uint8_t robotStatus;
+    std::uint16_t currentStep;
     std::uint32_t programId;
 };
 #pragma pack(pop)
-static_assert(sizeof(CoreState) == CORE_STATE_HEADER_BYTE_LENGTH, "CoreState struct size must match CORE_STATE_HEADER_BYTE_LENGTH");
+static_assert(sizeof(RobotState) == STATE_BYTE_LENGTH, "RobotState struct size must match STATE_BYTE_LENGTH");
 
 // ---------------------------------------------------------------------------
-// Robot-specific state configurations
+// Robot-specific calibration payloads
 // ---------------------------------------------------------------------------
 
 // Olibot (two-wheel differential-drive robot)
-constexpr std::size_t OLIBOT_STATE_BYTE_LENGTH = 16;
+constexpr std::size_t OLIBOT_CALIBRATION_BYTE_LENGTH = 6;
 
 #pragma pack(push, 1)
-struct OlibotState {
-    std::uint8_t version;
-    std::uint8_t flags;
-    std::uint8_t programState;
-    std::uint8_t programError;
-    std::uint16_t currentInstructionIndex;
-    std::uint32_t programId;
+struct OlibotCalibration {
     std::int8_t motorBias;
-    std::uint8_t _reserved_11[1];
+    std::uint8_t _reserved_1[1];
     std::uint16_t distanceCalibration;
     std::uint16_t sensorDistance;
 };
 #pragma pack(pop)
-static_assert(sizeof(OlibotState) == OLIBOT_STATE_BYTE_LENGTH, "OlibotState struct size must match OLIBOT_STATE_BYTE_LENGTH");
+static_assert(sizeof(OlibotCalibration) == OLIBOT_CALIBRATION_BYTE_LENGTH, "OlibotCalibration struct size must match OLIBOT_CALIBRATION_BYTE_LENGTH");
 
 // Otto DIY (bipedal walking robot)
-constexpr std::size_t OTTO_STATE_BYTE_LENGTH = 16;
+constexpr std::size_t OTTO_CALIBRATION_BYTE_LENGTH = 6;
 
 #pragma pack(push, 1)
-struct OttoState {
-    std::uint8_t version;
-    std::uint8_t flags;
-    std::uint8_t programState;
-    std::uint8_t programError;
-    std::uint16_t currentInstructionIndex;
-    std::uint32_t programId;
+struct OttoCalibration {
     std::int8_t trimLeftLeg;
     std::int8_t trimRightLeg;
     std::int8_t trimLeftFoot;
@@ -155,10 +157,6 @@ struct OttoState {
     std::uint16_t sensorDistance;
 };
 #pragma pack(pop)
-static_assert(sizeof(OttoState) == OTTO_STATE_BYTE_LENGTH, "OttoState struct size must match OTTO_STATE_BYTE_LENGTH");
-
-// Default State alias
-using State = OlibotState;
-constexpr std::size_t STATE_BYTE_LENGTH = OLIBOT_STATE_BYTE_LENGTH;
+static_assert(sizeof(OttoCalibration) == OTTO_CALIBRATION_BYTE_LENGTH, "OttoCalibration struct size must match OTTO_CALIBRATION_BYTE_LENGTH");
 
 }  // namespace robot::protocol

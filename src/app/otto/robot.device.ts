@@ -10,12 +10,14 @@ import {
     BLE_RESPONSE_CHARACTERISTIC_UUID,
     BLE_SERVICE_UUID,
     BLE_STATE_CHARACTERISTIC_UUID,
+    BLE_CALIBRATION_CHARACTERISTIC_UUID,
     parseBleResponse,
 } from "../editor/generator/schema/transport.schema";
 import { PROGRAM_COMMANDS } from "../editor/generator/schema/program.schema";
 import { OPCODES } from "../editor/generator/schema/opcodes.schema";
 import { ROBOT_MOTION_COMMANDS } from "../editor/generator/schema/motion.schema";
-import { ProgramError, ProgramState } from "../editor/generator/schema/state.schema";
+import { ROBOT_COMMANDS } from "../editor/generator/schema/commands.schema";
+import { RobotStatus, RobotType } from "../editor/generator/schema/state.schema";
 
 export type RobotTypeId = 'otto' | 'olibot';
 
@@ -25,11 +27,13 @@ export class RobotDevice {
     public static CommandWriteCharacteristicUuid: BluetoothCharacteristicUUID = BLE_COMMAND_WRITE_CHARACTERISTIC_UUID;
     public static ResponseCharacteristicUuid: BluetoothCharacteristicUUID = BLE_RESPONSE_CHARACTERISTIC_UUID;
     public static StateCharacteristicUuid: BluetoothCharacteristicUUID = BLE_STATE_CHARACTERISTIC_UUID;
+    public static CalibrationCharacteristicUuid: BluetoothCharacteristicUUID = BLE_CALIBRATION_CHARACTERISTIC_UUID;
     private readonly _bleDevice: BluetoothDevice;
     private _gattServer?: BluetoothRemoteGATTServer;
     private _gattCharacteristic?: BluetoothRemoteGATTCharacteristic;
     private _responseCharacteristic?: BluetoothRemoteGATTCharacteristic;
     private _stateCharacteristic?: BluetoothRemoteGATTCharacteristic;
+    private _calibrationCharacteristic?: BluetoothRemoteGATTCharacteristic;
 
     public state?: RobotDevice.State;
     public currentRunProgramId?: number;
@@ -72,6 +76,7 @@ export class RobotDevice {
                     this._gattCharacteristic = await service.getCharacteristic(RobotDevice.CommandWriteCharacteristicUuid);
                     this._responseCharacteristic = await service.getCharacteristic(RobotDevice.ResponseCharacteristicUuid);
                     this._stateCharacteristic = await service.getCharacteristic(RobotDevice.StateCharacteristicUuid);
+                    this._calibrationCharacteristic = await service.getCharacteristic(RobotDevice.CalibrationCharacteristicUuid);
                     await this._responseCharacteristic.startNotifications();
                     this._responseCharacteristic.addEventListener('characteristicvaluechanged', this.onResponse);
                     await this._stateCharacteristic.startNotifications();
@@ -133,7 +138,7 @@ export class RobotDevice {
         const subject = new Subject<RobotDevice.State>();
         const observable = new Observable<RobotDevice.State>(observer => {
             // check is connected
-            const stateCharacteristic = this._stateCharacteristic ?? this._gattCharacteristic;
+            const stateCharacteristic = this._stateCharacteristic;
             if(this._gattServer?.connected !== true || !stateCharacteristic) {
                 observer.error("not connected");
                 observer.complete();
@@ -172,28 +177,13 @@ export class RobotDevice {
                         }
                     }
 
-                    const flags = rawFields['flags'] ?? 0;
                     const state: RobotDevice.State = {
                         version: rawFields['version'],
-                        flags,
-                        programState: rawFields['programState'] as ProgramState,
-                        programError: rawFields['programError'] as ProgramError,
-                        currentInstructionIndex: rawFields['currentInstructionIndex'] ?? 0,
+                        type: rawFields['type'] as RobotType,
+                        robotStatus: rawFields['robotStatus'] as RobotStatus,
+                        currentStep: rawFields['currentStep'] ?? 0,
                         programId: rawFields['programId'] ?? 0,
-                        programRunning: rawFields['programState'] === ProgramState.Running
-                            || schema.stateFlagBits.some(f => f.name === 'programRunning' && (flags & (1 << f.bit)) > 0),
-                        // Otto calibration
-                        trimLeftLeg: rawFields['trimLeftLeg'],
-                        trimRightLeg: rawFields['trimRightLeg'],
-                        trimLeftFoot: rawFields['trimLeftFoot'],
-                        trimRightFoot: rawFields['trimRightFoot'],
-                        // Olibot calibration
-                        motorBias: rawFields['motorBias'],
-                        distanceCalibration: rawFields['distanceCalibration'],
-                        // Sensors
-                        sensorDistance: rawFields['sensorDistance'] ?? 0
                     };
-
                     this.state = state;
                     this.stateChanges.next(state);
 
@@ -211,6 +201,50 @@ export class RobotDevice {
         });
 
         return subject;
+    }
+
+    public updateCalibration(): Observable<RobotDevice.Calibration> {
+        return new Observable<RobotDevice.Calibration>(observer => {
+            if (this._gattServer?.connected !== true || !this._calibrationCharacteristic) {
+                observer.error("not connected");
+                return;
+            }
+
+            this._calibrationCharacteristic.readValue().then(dataView => {
+                const schema = this.schema;
+                if (dataView.byteLength !== schema.calibrationByteLength) {
+                    observer.error(`calibration payload length mismatch: expected ${schema.calibrationByteLength} bytes, got ${dataView.byteLength}`);
+                    return;
+                }
+                const rawFields = this.readFields(dataView, schema.calibrationFields);
+                const calibration: RobotDevice.Calibration = {
+                    trimLeftLeg: rawFields['trimLeftLeg'],
+                    trimRightLeg: rawFields['trimRightLeg'],
+                    trimLeftFoot: rawFields['trimLeftFoot'],
+                    trimRightFoot: rawFields['trimRightFoot'],
+                    motorBias: rawFields['motorBias'],
+                    distanceCalibration: rawFields['distanceCalibration'],
+                    sensorDistance: rawFields['sensorDistance'] ?? 0,
+                };
+                Logger.log('robot calibration read', calibration);
+                this.state = { ...this.state, ...calibration } as RobotDevice.State;
+                observer.next(calibration);
+                observer.complete();
+            }).catch(error => observer.error(error));
+        });
+    }
+
+    private readFields(dataView: DataView, fields: readonly { name: string; offset: number; type: 'u8' | 'i8' | 'u16le' | 'u32le' }[]): Record<string, number> {
+        const rawFields: Record<string, number> = {};
+        for (const field of fields) {
+            switch (field.type) {
+                case 'u8': rawFields[field.name] = dataView.getUint8(field.offset); break;
+                case 'i8': rawFields[field.name] = dataView.getInt8(field.offset); break;
+                case 'u16le': rawFields[field.name] = dataView.getUint16(field.offset, true); break;
+                case 'u32le': rawFields[field.name] = dataView.getUint32(field.offset, true); break;
+            }
+        }
+        return rawFields;
     }
 
     // Recursively send commands and then complete the observer
@@ -288,15 +322,16 @@ export class RobotDevice {
         const mnemonic = instructionTokens[0];
         const opcode = OPCODES.find(item => item.mnemonic === mnemonic);
         const motion = ROBOT_MOTION_COMMANDS.find(item => item.mnemonic === mnemonic);
+        const robotCommand = ROBOT_COMMANDS.find(item => item.mnemonic === mnemonic);
         const program = PROGRAM_COMMANDS.find(item => item.mnemonic === mnemonic);
-        const known = Boolean(opcode || motion || program);
+        const known = Boolean(opcode || motion || program || robotCommand);
         if (!known) {
             throw new Error(`Unsupported command '${mnemonic}'`);
         }
         if (upload && program) {
             throw new Error('Program lifecycle commands cannot be stored as instructions');
         }
-        const definition = opcode ?? motion;
+        const definition = opcode ?? motion ?? robotCommand;
         if (program?.requiresArgument && instructionTokens.length !== 2) {
             throw new Error(`${mnemonic} requires one argument`);
         }
@@ -309,10 +344,19 @@ export class RobotDevice {
         if (!program && definition && definition.argKind !== 'none' && instructionTokens.length !== 2) {
             throw new Error(`${mnemonic} requires one argument`);
         }
-        if (instructionTokens.length === 2 && !/^#?-?\d+$/.test(instructionTokens[1])) {
+        if (robotCommand?.argKind === 'text3' && !/^[A-Za-z0-9]{3}$/.test(instructionTokens[1] ?? '')) {
+            throw new Error(`${mnemonic} argument must be exactly three letters or digits`);
+        }
+        if (robotCommand && instructionTokens.length === 2 && robotCommand.min !== undefined
+            && (Number(instructionTokens[1]) < robotCommand.min || Number(instructionTokens[1]) > (robotCommand.max ?? 32767))) {
+            throw new RangeError(`${mnemonic} argument is outside the supported range`);
+        }
+        if (instructionTokens.length === 2
+            && definition?.argKind !== 'text3'
+            && !/^#?-?\d+$/.test(instructionTokens[1])) {
             throw new Error(`${mnemonic} argument must be a signed integer or #variable reference`);
         }
-        if (instructionTokens.length === 2) {
+        if (instructionTokens.length === 2 && definition?.argKind !== 'text3') {
             const argument = instructionTokens[1];
             const isVariable = argument.startsWith('#');
             const value = Number(isVariable ? argument.slice(1) : argument);
@@ -373,12 +417,10 @@ export namespace RobotDevice
 {
     export interface State {
         version: number;
-        flags?: number;
-        programState: ProgramState;
-        programError: ProgramError;
-        currentInstructionIndex: number;
+        type: RobotType;
+        robotStatus: RobotStatus;
+        currentStep: number;
         programId: number;
-        programRunning: boolean;
         // Otto-specific calibration
         trimLeftLeg?: number;
         trimRightLeg?: number;
@@ -388,6 +430,16 @@ export namespace RobotDevice
         motorBias?: number;
         distanceCalibration?: number;
         // Sensors
+        sensorDistance?: number;
+    }
+
+    export interface Calibration {
+        trimLeftLeg?: number;
+        trimRightLeg?: number;
+        trimLeftFoot?: number;
+        trimRightFoot?: number;
+        motorBias?: number;
+        distanceCalibration?: number;
         sensorDistance: number;
     }
 }

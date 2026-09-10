@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OPCODES } from './schema/opcodes.schema';
 import { ROBOT_MOTION_COMMANDS } from './schema/motion.schema';
 import { PROTOCOL_VERSION, INSTRUCTION_SIZE, INSTRUCTION_LIST_SIZE, VARIABLE_LIST_SIZE } from './schema/protocol.schema';
-import { CORE_STATE_FIELDS, CORE_STATE_FLAG_BITS, CORE_STATE_HEADER_BYTE_LENGTH } from './schema/state.schema';
+import { CORE_STATE_FIELDS, CORE_STATE_HEADER_BYTE_LENGTH } from './schema/state.schema';
 import { OTTO_ROBOT_SCHEMA } from './schema/robots/otto.schema';
 import { OLIBOT_ROBOT_SCHEMA } from './schema/robots/olibot.schema';
 import { BLE_SERVICE_UUID, BLE_COMMAND_WRITE_CHARACTERISTIC_UUID, BLE_RESPONSE_CHARACTERISTIC_UUID, BLE_STATE_CHARACTERISTIC_UUID } from './schema/transport.schema';
@@ -40,7 +40,7 @@ describe('Protocol Schema and Code Generation', () => {
 
     it('has robot-specific configuration state layouts', () => {
         // Otto has trim fields
-        const ottoFieldNames = OTTO_ROBOT_SCHEMA.stateFields.map(f => f.name);
+        const ottoFieldNames = OTTO_ROBOT_SCHEMA.calibrationFields.map(f => f.name);
         expect(ottoFieldNames).toContain('trimLeftLeg');
         expect(ottoFieldNames).toContain('trimRightLeg');
         expect(ottoFieldNames).toContain('trimLeftFoot');
@@ -48,13 +48,13 @@ describe('Protocol Schema and Code Generation', () => {
         expect(ottoFieldNames).not.toContain('motorBias');
 
         // Olibot has motor bias and distance calibration
-        const olibotFieldNames = OLIBOT_ROBOT_SCHEMA.stateFields.map(f => f.name);
+        const olibotFieldNames = OLIBOT_ROBOT_SCHEMA.calibrationFields.map(f => f.name);
         expect(olibotFieldNames).toContain('motorBias');
         expect(olibotFieldNames).toContain('distanceCalibration');
         expect(olibotFieldNames).not.toContain('trimLeftLeg');
     });
 
-    it('generates a single unified C++ header with shared protocol and robot-specific states', () => {
+    it('generates a single unified C++ header with shared state and robot-specific calibration', () => {
         const header = generateSingleHeader();
         expect(header).toContain('namespace robot::protocol');
         expect(header).toContain('constexpr int PROTOCOL_VERSION = 1;');
@@ -69,17 +69,18 @@ describe('Protocol Schema and Code Generation', () => {
         expect(header).not.toContain('MOTION_');
         expect(header).not.toContain('OLIBOT_SET_');
         expect(header).not.toContain('MOTION_VICTORY');
-        expect(header).toContain('enum class ProgramState');
-        expect(header).toContain('MotionTimeout = 1');
+        expect(header).toContain('enum class RobotStatus');
+        expect(header).toContain('CalibrationRunning = 3');
         expect(header).toContain('std::uint32_t programId;');
         expect(header).toContain('constexpr const char* PROGRAM_SAVE = "save";');
         expect(header).toContain('// exit: Stop the interpreter.');
-        expect(header).toContain('struct CoreState');
-        expect(header).toContain('struct OlibotState');
+        expect(header).toContain('struct RobotState');
+        expect(header).not.toContain('struct CoreState');
+        expect(header).not.toContain('struct OlibotState');
         expect(header).toContain('std::int8_t motorBias;');
         expect(header).toContain('std::uint16_t distanceCalibration;');
-        expect(header).toContain('struct OttoState');
+        expect(header).not.toContain('struct OttoState');
         expect(header).toContain('std::int8_t trimLeftLeg;');
-        expect(header).toContain('using State = OlibotState;');
+        expect(header).toContain('struct OttoCalibration');
     });
 });

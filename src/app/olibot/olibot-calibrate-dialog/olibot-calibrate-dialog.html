@@ -1,5 +1,15 @@
 <h2 mat-dialog-title>Olibot Configuration</h2>
 <mat-dialog-content class="fx-column fx-align-center">
+  <mat-form-field appearance="outline" class="robot-name-field">
+    <mat-label>Robot name suffix</mat-label>
+    <input matInput [formControl]="nameSuffixControl" maxlength="3" (input)="normalizeNameSuffix()" autocomplete="off">
+    <mat-hint>Three letters or digits; the robot prefix stays discoverable.</mat-hint>
+    @if (nameSuffixControl.hasError('required')) {
+      <mat-error>A three-character suffix is required.</mat-error>
+    } @else if (nameSuffixControl.hasError('pattern')) {
+      <mat-error>Use exactly three letters or digits.</mat-error>
+    }
+  </mat-form-field>
   <div>
     Distance Sensor: {{sensorDistance()}} mm
     <button class="ml-1" mat-button (click)="refresh()" [disabled]="isDeviceBusy()">Refresh</button>

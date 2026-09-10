@@ -4,14 +4,19 @@ import { STATE_BYTE_LENGTH } from '../editor/generator/schema/state.schema';
 import { OLIBOT_STATE_BYTE_LENGTH } from '../editor/generator/schema/robots/olibot.schema';
 
 describe('RobotDevice.updateState', () => {
-    function createDevice(dataView: DataView, deviceName: string = 'OTTO_DEV'): RobotDevice {
+    function createDevice(dataView: DataView, deviceName: string = 'OTTO_DEV', calibrationView?: DataView): RobotDevice {
         const characteristic = {
             readValue: vi.fn().mockResolvedValue(dataView),
+        };
+        const calibrationCharacteristic = {
+            readValue: vi.fn().mockResolvedValue(calibrationView ?? dataView),
         };
 
         const device = new RobotDevice({ name: deviceName } as BluetoothDevice);
         (device as any)._gattServer = { connected: true };
         (device as any)._gattCharacteristic = characteristic;
+        (device as any)._stateCharacteristic = characteristic;
+        (device as any)._calibrationCharacteristic = calibrationCharacteristic;
 
         return device;
     }
@@ -20,15 +25,9 @@ describe('RobotDevice.updateState', () => {
         const buffer = new ArrayBuffer(STATE_BYTE_LENGTH);
         const view = new DataView(buffer);
         view.setUint8(0, 1); // version
-        view.setUint8(1, 0x01); // flags: programRunning
-        view.setUint8(2, 1); // running
-        view.setUint32(6, 0x12345678, true); // program id
-        view.setInt8(10, -1); // trimLeftLeg
-        view.setInt8(11, 2); // trimRightLeg
-        view.setInt8(12, -3); // trimLeftFoot
-        view.setInt8(13, 4); // trimRightFoot
-        view.setUint8(14, 0x34); // sensorDistance low byte
-        view.setUint8(15, 0x12); // sensorDistance high byte
+        view.setUint8(1, 0); // Otto type
+        view.setUint8(2, 1); // program running
+        view.setUint32(5, 0x12345678, true); // program id
 
         const device = createDevice(view, 'OTTO_01');
 
@@ -50,27 +49,18 @@ describe('RobotDevice.updateState', () => {
         });
 
         expect(state.version).toBe(1);
-        expect(state.programRunning).toBe(true);
+        expect(state.robotStatus).toBe(1);
         expect(state.programId).toBe(0x12345678);
-        expect(state.trimLeftLeg).toBe(-1);
-        expect(state.trimRightLeg).toBe(2);
-        expect(state.trimLeftFoot).toBe(-3);
-        expect(state.trimRightFoot).toBe(4);
-        expect(state.sensorDistance).toBe(0x1234);
+        expect(state.type).toBe(0);
     });
 
     it('parses an Olibot state payload using Olibot schema offsets', async () => {
         const buffer = new ArrayBuffer(OLIBOT_STATE_BYTE_LENGTH);
         const view = new DataView(buffer);
         view.setUint8(0, 1); // version
-        view.setUint8(1, 0x01); // flags: programRunning
-        view.setUint8(2, 1); // running
-        view.setUint32(6, 42, true); // program id
-        view.setInt8(10, -5); // motorBias
-        view.setUint8(12, 0x64); // distanceCalibration low byte (100)
-        view.setUint8(13, 0x00); // distanceCalibration high byte
-        view.setUint8(14, 0x78); // sensorDistance low byte (120)
-        view.setUint8(15, 0x00); // sensorDistance high byte
+        view.setUint8(1, 1); // Olibot type
+        view.setUint8(2, 1); // program running
+        view.setUint32(5, 42, true); // program id
 
         const device = createDevice(view, 'OLIBOT_01');
 
@@ -80,11 +70,9 @@ describe('RobotDevice.updateState', () => {
 
         expect(device.robotType).toBe('olibot');
         expect(state.version).toBe(1);
-        expect(state.programRunning).toBe(true);
+        expect(state.robotStatus).toBe(1);
         expect(state.programId).toBe(42);
-        expect(state.motorBias).toBe(-5);
-        expect(state.distanceCalibration).toBe(100);
-        expect(state.sensorDistance).toBe(120);
+        expect(state.type).toBe(1);
     });
 
     it('errors instead of throwing when the payload is shorter than expected', async () => {
@@ -95,5 +83,31 @@ describe('RobotDevice.updateState', () => {
         await expect(new Promise((resolve, reject) => {
             device.updateState().subscribe({ next: resolve, error: reject });
         })).rejects.toBeDefined();
+    });
+
+    it('reads Otto trims from the separate calibration characteristic', async () => {
+        const stateView = new DataView(new ArrayBuffer(STATE_BYTE_LENGTH));
+        stateView.setUint8(1, 0);
+        const calibrationView = new DataView(new ArrayBuffer(6));
+        calibrationView.setInt8(0, -12);
+        calibrationView.setInt8(1, 8);
+        calibrationView.setInt8(2, -3);
+        calibrationView.setInt8(3, 4);
+        calibrationView.setUint16(4, 321, true);
+        const device = createDevice(stateView, 'OTTO_01', calibrationView);
+
+        const calibration = await new Promise<RobotDevice.Calibration>((resolve, reject) => {
+            device.updateCalibration().subscribe({ next: resolve, error: reject });
+        });
+
+        expect(calibration).toEqual({
+            trimLeftLeg: -12,
+            trimRightLeg: 8,
+            trimLeftFoot: -3,
+            trimRightFoot: 4,
+            motorBias: undefined,
+            distanceCalibration: undefined,
+            sensorDistance: 321,
+        });
     });
 });
